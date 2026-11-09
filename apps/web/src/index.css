@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/* The engine builds its map elements with Tailwind classes. */
+@source "../../../packages/engine/src";
+
+@theme {
+  --font-hand: "Caveat Variable", "Caveat", ui-rounded, cursive;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply overflow-hidden overscroll-none bg-amber-50 text-stone-800 antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* MapLibre's attribution, in the app's style. */
+.maplibregl-ctrl.maplibregl-ctrl-attrib {
+  @apply rounded-full bg-amber-50/90 text-[11px] text-stone-600 shadow-sm ring-1 ring-stone-900/5;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact-show {
+  @apply rounded-xl;
+}
+
+/* On phones the toolbars sit at the bottom, so move the attribution up top. */
+@media (width < 48rem) {
+  .maplibregl-ctrl-bottom-right {
+    top: 4.25rem;
+    bottom: auto;
+  }
+}

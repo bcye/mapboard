@@ -1,0 +1,55 @@
+/* Element styling uses Tailwind classes; this only covers what depends on the active tool. */
+
+.em-root .em-point {
+  pointer-events: none;
+}
+
+.em-root[data-tool="select"] .em-point {
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.em-root[data-tool="select"] .em-point.em-editing {
+  cursor: text;
+}
+
+.em-root[data-tool="select"] .em-point.em-editing [data-note-text] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.em-root[data-tool="draw"] .maplibregl-canvas-container,
+.em-root[data-tool="arrow"] .maplibregl-canvas-container,
+.em-root[data-tool="marker"] .maplibregl-canvas-container,
+.em-root[data-tool="note"] .maplibregl-canvas-container,
+.em-root[data-tool="pin"] .maplibregl-canvas-container {
+  cursor: crosshair;
+}
+
+.em-root[data-tool="eraser"] .maplibregl-canvas-container {
+  cursor: cell;
+}
+
+/*
+ * With drag-pan off, MapLibre leaves touch-action at pan-x pan-y, so the browser
+ * would claim one-finger gestures and cancel the stroke. Pinch-zoom still works
+ * through MapLibre's own touch handling.
+ */
+.em-root[data-tool="draw"] .maplibregl-canvas-container,
+.em-root[data-tool="arrow"] .maplibregl-canvas-container,
+.em-root[data-tool="eraser"] .maplibregl-canvas-container {
+  touch-action: none;
+}
+
+.em-scale {
+  will-change: transform;
+}
+
+.em-draft {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
