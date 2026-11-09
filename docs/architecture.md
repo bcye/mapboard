@@ -10,6 +10,7 @@
 - Yjs as store. Probably more mature, sync seems much more robust.
 - MapLibre. No Mapbox lock-in, plenty of good other tile providers.
 - Probably no raster tiles down the road
+- Drawing: everything MapLibre (markers and layers), unless it really doesn't work for what we're trying to do
 - Vite
 - Engine/non-framework code lives separately, so frameworks can be trialed
 - React for the first prototype. Probably rebuild later in other frameworks, just to try them.
