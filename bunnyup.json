@@ -1,0 +1,6 @@
+{
+  "name": "drawmap",
+  "outputFolder": "apps/web/dist",
+  "pruneAfter": "30",
+  "pullZoneId": 6979025
+}

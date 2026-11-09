@@ -1,0 +1,22 @@
+name: Deploy to Bunny.net
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      # Install and build your project, you may want to use a different package manager for this
+      - run: bun install
+      - run: bun run build
+
+      # Deploy to Bunny.net, this does not require `bun install` as it is run with bunx.
+      - run: bunx bunnyup deploy
+        env:
+          BUNNY_API_KEY: ${{ secrets.BUNNY_API_KEY }}
