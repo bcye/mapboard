@@ -14,6 +14,8 @@ const LOCAL = "local";
 const OTHER_TAB = "other-tab";
 /** Origin of imported content; not undoable. */
 const IMPORT = "import";
+/** Origin of updates from another peer, e.g. a sync server; not undoable. */
+const REMOTE = "remote";
 
 export type ElementPatch = { [K in string]?: unknown };
 
@@ -45,6 +47,12 @@ export interface Board {
   toJSON(): Record<string, BoardElement>;
   /** Writes elements, e.g. from an import. Not undoable. */
   load(elements: Record<string, BoardElement>): void;
+  /** Full state as one binary update, for a peer catching up. */
+  encodeState(): Uint8Array;
+  /** Applies a binary update from another peer. Order and duplicates don't matter. */
+  applyUpdate(update: Uint8Array): void;
+  /** Binary updates to send to other peers: every change except ones applied from a peer. */
+  onUpdate(listener: (update: Uint8Array) => void): () => void;
   destroy(): void;
 }
 
@@ -167,6 +175,17 @@ export function openBoard(id: string, options: OpenBoardOptions = {}): Board {
       const out: Record<string, BoardElement> = {};
       for (const element of this.all()) out[element.id] = element;
       return out;
+    },
+    encodeState: () => Y.encodeStateAsUpdate(doc),
+    applyUpdate(update) {
+      Y.applyUpdate(doc, update, REMOTE);
+    },
+    onUpdate(listener) {
+      const handler = (update: Uint8Array, origin: unknown) => {
+        if (origin !== REMOTE) listener(update);
+      };
+      doc.on("update", handler);
+      return () => doc.off("update", handler);
     },
     load(incoming) {
       doc.transact(() => {
