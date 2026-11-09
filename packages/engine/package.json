@@ -1,0 +1,27 @@
+{
+  "name": "engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Framework-free board engine: Yjs board model, tools and MapLibre rendering.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "test": "vp test"
+  },
+  "dependencies": {
+    "fractional-indexing": "catalog:",
+    "maplibre-gl": "catalog:",
+    "nanostores": "catalog:",
+    "perfect-freehand": "catalog:",
+    "y-indexeddb": "catalog:",
+    "yjs": "catalog:"
+  },
+  "devDependencies": {
+    "@types/geojson": "catalog:",
+    "typescript": "^7.0.2",
+    "vite-plus": "catalog:"
+  }
+}

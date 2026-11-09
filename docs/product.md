@@ -12,6 +12,11 @@
 - Works fairly decently on mobile/touch
 - One toolbar for mode selection, a separate toolbar for modifying the tool (color etc.) if applicable. Both 1 unit high.
 
+## Design
+
+- Not as minimalistic as Excalidraw. Color palette and icons with a fun/travel mood.
+- Tailwind default theme to start, mainly for accent and background colors.
+
 ## Planned separate (possibly paid) features
 
 - Sync, collab, anything non-local
