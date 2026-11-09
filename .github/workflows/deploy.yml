@@ -10,11 +10,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
+      # Installs Vite+ and runs `vp install`
+      - uses: voidzero-dev/setup-vp@v1
+        with:
+          cache: true
 
-      # Install and build your project, you may want to use a different package manager for this
-      - run: bun install
-      - run: bun run build
+      # Type-checks and builds the web app into apps/web/dist
+      - run: vp run web#build
+        env:
+          VITE_MAP_STYLES: ${{ secrets.VITE_MAP_STYLES }}
+
+      - uses: oven-sh/setup-bun@v2
 
       # Deploy to Bunny.net, this does not require `bun install` as it is run with bunx.
       - run: bunx bunnyup deploy
