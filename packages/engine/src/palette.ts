@@ -45,4 +45,3 @@ export function paperColor(key: string | undefined): PaletteColor {
 
 /** Stroke widths in px at the element's reference zoom. */
 export const STROKE_SIZE = { s: 4, m: 7, l: 12 } as const;
-export const ARROW_SIZE = { s: 3, m: 5, l: 8 } as const;

@@ -13,7 +13,8 @@ const strokeOptions = (size: number, pen: boolean): StrokeOptions => ({
   last: true,
 });
 
-const arrowOptions = (size: number): StrokeOptions => ({
+/** The two strokes of an arrowhead: even width, no pressure. */
+const headOptions = (size: number): StrokeOptions => ({
   size,
   thinning: 0.1,
   smoothing: 0.6,
@@ -29,25 +30,31 @@ export function strokeOutline(points: InkXY[], size: number): XY[] {
   return closeRing(getStroke(input, strokeOptions(size, pen)));
 }
 
-/** Outline rings for an arrow: the shaft plus the two strokes of the head. */
-export function arrowOutlines(points: XY[], size: number): XY[][] {
-  if (points.length < 2) return [];
-  const total = polylineLength(points);
-  if (total === 0) return [];
-  const tip = points[points.length - 1]!;
-  const headLength = Math.min(Math.max(size * 3.2, 14), total * 0.45);
-  const back = pointAlong(points, Math.max(0, total - headLength));
+/** Outline rings for an arrow: the same freehand stroke as a line, plus a head at its end. */
+export function arrowOutlines(points: InkXY[], size: number): XY[][] {
+  const shaft = strokeOutline(points, size);
+  const path = points.map((p): XY => [p[0], p[1]]);
+  const total = polylineLength(path);
+  if (total === 0) return [shaft];
+  const tip = path[path.length - 1]!;
+  const headLength = Math.min(Math.max(size * 2.6, 14), total * 0.45);
+  // Aim the head along the last stretch of the line, not its final wobble.
+  const back = pointAlong(path, Math.max(0, total - headLength * 0.75));
   const direction = normalize(sub(tip, back));
+  if (direction[0] === 0 && direction[1] === 0) return [shaft];
   const wing = (angle: number): XY => {
     const cos = Math.cos(angle);
     const sin = Math.sin(angle);
     const d: XY = [-direction[0], -direction[1]];
     return add(tip, scale([d[0] * cos - d[1] * sin, d[0] * sin + d[1] * cos], headLength));
   };
-  const withPressure = (pts: XY[]) => pts.map((p) => [p[0], p[1], 0.5]);
-  const shaft = closeRing(getStroke(withPressure(points), arrowOptions(size)));
   const head = [wing(0.5), wing(-0.5)].map((end) =>
-    closeRing(getStroke(withPressure([end, tip]), arrowOptions(size))),
+    closeRing(
+      getStroke(
+        [end, tip].map((p) => [p[0], p[1], 0.5]),
+        headOptions(size * 0.8),
+      ),
+    ),
   );
   return [shaft, ...head];
 }

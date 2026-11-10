@@ -24,7 +24,7 @@ export class DraftLayer {
     this.fill([strokeOutline(points, size)], color);
   }
 
-  drawArrow(points: XY[], size: number, color: string) {
+  drawArrow(points: InkXY[], size: number, color: string) {
     this.fill(arrowOutlines(points, size), color);
   }
 

@@ -62,29 +62,5 @@ export function pointAlong(points: XY[], distance: number): XY {
   return points[points.length - 1]!;
 }
 
-/**
- * A gentle arc from `a` to `b`, sampled into points, like a flight route.
- * `bend` is the control point's offset as a fraction of the distance; the arc
- * always bulges "up" (towards smaller y), which reads well on a north-up map.
- */
-export function arcPoints(a: XY, b: XY, bend: number, samples = 32): XY[] {
-  const d = sub(b, a);
-  const length = len(d);
-  if (length === 0 || bend === 0) return [a, b];
-  let normal: XY = [d[1] / length, -d[0] / length];
-  if (normal[1] > 0) normal = scale(normal, -1);
-  const control = add(scale(add(a, b), 0.5), scale(normal, length * bend));
-  const out: XY[] = [];
-  for (let i = 0; i <= samples; i++) {
-    const t = i / samples;
-    const u = 1 - t;
-    out.push([
-      u * u * a[0] + 2 * u * t * control[0] + t * t * b[0],
-      u * u * a[1] + 2 * u * t * control[1] + t * t * b[1],
-    ]);
-  }
-  return out;
-}
-
 /** Rounds coordinates for storage (7 decimals is ~1 cm). */
 export const roundCoord = (value: number) => Math.round(value * 1e7) / 1e7;

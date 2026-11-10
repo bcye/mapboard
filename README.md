@@ -32,7 +32,7 @@ To pass dev server flags, target the app directly, e.g. `vp -C apps/web dev --ho
 
 ## Map styles
 
-Basemaps come from `VITE_MAP_STYLES` in `apps/web/.env.local`: a JSON list of `{ name, url }` MapLibre style URLs, first one default. See [`apps/web/.env.example`](apps/web/.env.example) for MapTiler streets, satellite and ocean. Without it, the app uses OpenFreeMap styles, which need no key.
+Basemaps come from `VITE_MAP_STYLES` in `apps/web/.env.local`: a JSON list of `{ name, url }` MapLibre style URLs, first one default. See [`apps/web/.env.example`](apps/web/.env.example) for MapTiler streets, outdoor and satellite. The deploy workflow reads it from the `VITE_MAP_STYLES` repository secret. Without it, the app uses OpenFreeMap styles, which need no key.
 
 ## Data
 
