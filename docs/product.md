@@ -3,6 +3,7 @@
 ## Start
 
 - Base elements as in the prototype: draw, arrow, marker, post-it, eraser
+- Arrow: drawn exactly like a line, with an arrowhead at one end
 - New element: board pin. Links to another board, opens it in a new tab on click.
 - Drawings snap to a post-it or marker if one is in the area. Snapped lines follow when it moves; only the last part of the line moves.
 - Export and import as JSON for backup from day one. Import creates a new board.
