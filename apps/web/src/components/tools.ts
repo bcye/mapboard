@@ -7,6 +7,7 @@ import {
   PushPin,
   ScribbleLoop,
   type Icon,
+  type IconWeight,
 } from "@phosphor-icons/react";
 import type { ToolId } from "engine";
 
@@ -16,6 +17,8 @@ interface ToolMeta {
   /** Classes for the idle and active button. Literal strings so Tailwind sees them. */
   idle: string;
   active: string;
+  /** Icon weight when active. Defaults to "fill"; line-only icons render as a filled box with it. */
+  activeWeight?: IconWeight;
 }
 
 export const TOOL_META: Record<ToolId, ToolMeta> = {
@@ -30,6 +33,7 @@ export const TOOL_META: Record<ToolId, ToolMeta> = {
     Icon: ScribbleLoop,
     idle: "text-rose-500 hover:bg-rose-50",
     active: "bg-rose-500 text-white shadow-md shadow-rose-600/30",
+    activeWeight: "bold",
   },
   arrow: {
     label: "Arrow",
