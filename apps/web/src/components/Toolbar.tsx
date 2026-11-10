@@ -12,7 +12,7 @@ export function Toolbar() {
   return (
     <Panel role="toolbar" aria-label="Tools" className="gap-1">
       {TOOLS.map(({ id, key }) => {
-        const { label, Icon, idle, active } = TOOL_META[id];
+        const { label, Icon, idle, active, activeWeight = "fill" } = TOOL_META[id];
         const selected = current === id;
         return (
           <button
@@ -27,7 +27,7 @@ export function Toolbar() {
               selected ? active : idle,
             )}
           >
-            <Icon size={24} weight={selected ? "fill" : "duotone"} />
+            <Icon size={24} weight={selected ? activeWeight : "duotone"} />
             <span
               className={cx(
                 "absolute right-1 bottom-0.5 hidden text-[9px] leading-none font-semibold md:block",
