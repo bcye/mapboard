@@ -2,7 +2,7 @@ import type { Feature, FeatureCollection, MultiPolygon } from "geojson";
 import type { GeoJSONSource, Map as MapLibreMap } from "maplibre-gl";
 import { fromMerc, worldSize } from "../geo.ts";
 import { arrowOutlines, strokeOutline, type InkXY } from "../ink.ts";
-import { ARROW_SIZE, inkColor, SELECTION_HEX, STROKE_SIZE } from "../palette.ts";
+import { inkColor, SELECTION_HEX, STROKE_SIZE } from "../palette.ts";
 import type { Scene } from "../scene.ts";
 import type { LineElement } from "../types.ts";
 
@@ -20,13 +20,8 @@ export function lineFeature(line: LineElement, scene: Scene): LineFeature {
     const pressure = line.points[i]?.[2];
     return pressure === undefined ? [x * size, y * size] : [x * size, y * size, pressure];
   });
-  const rings =
-    line.kind === "arrow"
-      ? arrowOutlines(
-          path.map(([x, y]) => [x, y]),
-          ARROW_SIZE[line.width],
-        )
-      : [strokeOutline(path, STROKE_SIZE[line.width])];
+  const width = STROKE_SIZE[line.width];
+  const rings = line.kind === "arrow" ? arrowOutlines(path, width) : [strokeOutline(path, width)];
   const coordinates = rings
     .filter((ring) => ring.length >= 4)
     .map((ring) => [ring.map(([x, y]) => fromMerc([x / size, y / size]))]);

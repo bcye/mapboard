@@ -9,15 +9,13 @@ export interface ToolPrefs {
   /** Palette key for post-its. */
   paper: string;
   width: Width;
-  /** Arrows bend into an arc when true, otherwise they're straight. */
-  arrowCurve: boolean;
   /** Index into the configured map styles. */
   mapStyle: number;
 }
 
 const PREFS_KEY = "map-board:prefs";
 
-const defaultPrefs: ToolPrefs = { ink: "rose", paper: "amber", width: "m", arrowCurve: true, mapStyle: 0 };
+const defaultPrefs: ToolPrefs = { ink: "rose", paper: "amber", width: "m", mapStyle: 0 };
 
 function loadPrefs(): ToolPrefs {
   try {

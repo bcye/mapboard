@@ -1,13 +1,4 @@
-import {
-  ArrowBendUpRight,
-  ArrowSquareOut,
-  ArrowUpRight,
-  Check,
-  PencilSimpleLine,
-  Tag,
-  Trash,
-  X,
-} from "@phosphor-icons/react";
+import { ArrowSquareOut, Check, PencilSimpleLine, Tag, Trash, X } from "@phosphor-icons/react";
 import { useStore } from "@nanostores/react";
 import {
   $boards,
@@ -62,27 +53,6 @@ function ToolSettings({ tool }: { tool: Exclude<ToolId, "select" | "eraser"> }) 
         <>
           <Divider />
           <WidthRow value={prefs.width} onChange={(width) => engine.setPrefs({ width })} />
-        </>
-      )}
-      {tool === "arrow" && (
-        <>
-          <Divider />
-          <IconButton
-            compact
-            label="Straight arrow"
-            active={!prefs.arrowCurve}
-            onClick={() => engine.setPrefs({ arrowCurve: false })}
-          >
-            <ArrowUpRight size={22} weight="bold" />
-          </IconButton>
-          <IconButton
-            compact
-            label="Curved arrow"
-            active={prefs.arrowCurve}
-            onClick={() => engine.setPrefs({ arrowCurve: true })}
-          >
-            <ArrowBendUpRight size={22} weight="bold" />
-          </IconButton>
         </>
       )}
       {tool === "pin" && (

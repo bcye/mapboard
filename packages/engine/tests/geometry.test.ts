@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import { arcPoints, dist, fromMerc, toMerc, type XY } from "../src/geo.ts";
-import { bendEnd, snapPoint } from "../src/ink.ts";
+import { dist, fromMerc, toMerc, type XY } from "../src/geo.ts";
+import { arrowOutlines, bendEnd, snapPoint, strokeOutline, type InkXY } from "../src/ink.ts";
 import { Scene } from "../src/scene.ts";
 import type { BoardElement, LineElement, MarkerElement } from "../src/types.ts";
 
@@ -14,12 +14,22 @@ describe("geometry", () => {
     expect(toMerc([0, 0])).toEqual([0.5, 0.5]);
   });
 
-  it("samples an arc that starts and ends at the given points and bulges up", () => {
-    const arc = arcPoints([0, 10], [10, 10], 0.25, 16);
-    expect(arc[0]).toEqual([0, 10]);
-    expect(arc.at(-1)).toEqual([10, 10]);
-    expect(arc[8]![1]).toBeLessThan(10);
-    expect(arcPoints([10, 10], [0, 10], 0.25, 16)[8]![1]).toBeLessThan(10);
+  it("draws an arrow as the freehand line plus a head at its end", () => {
+    const line: InkXY[] = [
+      [0, 0],
+      [20, 10],
+      [40, 0],
+      [60, 10],
+      [100, 10],
+    ];
+    const [shaft, ...head] = arrowOutlines(line, 7);
+    expect(shaft).toEqual(strokeOutline(line, 7));
+    expect(head).toHaveLength(2);
+    // The head points along the last stretch: its wings sit behind the tip.
+    for (const ring of head) {
+      expect(Math.min(...ring.map(([x]) => x))).toBeLessThan(95);
+      expect(Math.max(...ring.map(([x]) => x))).toBeLessThanOrEqual(105);
+    }
   });
 
   it("bends only the end of a line onto a target", () => {
