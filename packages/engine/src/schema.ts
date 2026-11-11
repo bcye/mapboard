@@ -1,9 +1,10 @@
-import type { BoardElement, Label, LabelStyle, Width } from "./types.ts";
+import type { BoardElement, Label, LabelStyle, TextSize, Width } from "./types.ts";
 
 const LABEL_STYLES: LabelStyle[] = ["plain", "box"];
 /** Styles from older versions, read as the style that replaced them. */
 const LEGACY_LABEL_STYLES: Record<string, LabelStyle> = { note: "box" };
 const WIDTHS: Width[] = ["s", "m", "l"];
+const TEXT_SIZES: TextSize[] = ["s", "m", "l"];
 
 type Obj = Record<string, unknown>;
 
@@ -61,7 +62,8 @@ export function parseElement(input: unknown): BoardElement | null {
       return isLngLat(value.at) &&
         isStr(value.text) &&
         isStr(value.color) &&
-        (value.size === undefined || isSize(value.size))
+        (value.size === undefined || isSize(value.size)) &&
+        (value.textSize === undefined || TEXT_SIZES.includes(value.textSize as TextSize))
         ? (value as unknown as BoardElement)
         : null;
     case "pin":

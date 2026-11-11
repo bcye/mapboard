@@ -14,7 +14,7 @@
 - Export and import as JSON for backup from day one. Import creates a new board.
 - Labels on markers and lines, not on post-its. Plain (darker shade of the element's color) or in a box (black on white). Below markers, near the midpoint for lines. Wraps instead of growing wide. Edited in place on the map.
 - Elements get bigger and smaller with zoom, slower than the map and within limits. Applies to all elements. Size depends only on the current zoom, not the zoom an element was drawn at.
-- Post-its: fixed font size, grow as you type. Resizable, but not smaller than their text (trying it).
+- Post-its: font size small, medium or large; grow as you type. Resizable, but not smaller than their text (trying it).
 - City-level plans go on a separate board, linked from a marker (instead of hiding elements by zoom)
 - Works fairly decently on mobile/touch
 - One toolbar for mode selection, a separate toolbar for modifying the tool (color etc.) if applicable. Both 1 unit high.

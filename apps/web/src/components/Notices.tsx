@@ -18,10 +18,12 @@ export function EmptyHint() {
           <AirplaneTilt size={24} weight="fill" />
         </span>
         <p className="text-sm leading-snug text-stone-600">
-          <span className="font-hand text-2xl leading-7 font-semibold text-stone-800">Where to?</span>
+          <span className="font-hand text-2xl leading-7 font-semibold text-stone-800">
+            Explore &amp; Plan Freely
+          </span>
           <br />
-          Drop a marker, sketch a route or stick a post-it. A marker can get a board of its own, like one per
-          city.
+          Plan your next adventure freely with markers, post-its and drawings you can place on this map. Tip:
+          Create multiple boards and link to them from pins for more detailed planning.
         </p>
       </div>
     </div>

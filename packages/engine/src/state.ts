@@ -1,6 +1,6 @@
 import { atom } from "nanostores";
 import type { History } from "./board.ts";
-import type { BoardElement, LabelStyle, ToolId, Width } from "./types.ts";
+import type { BoardElement, LabelStyle, TextSize, ToolId, Width } from "./types.ts";
 
 /** Tool settings, remembered on this device. */
 export interface ToolPrefs {
@@ -9,6 +9,8 @@ export interface ToolPrefs {
   /** Palette key for post-its. */
   paper: string;
   width: Width;
+  /** Text size for post-its. */
+  textSize: TextSize;
   /** Style for new labels: the last one picked. */
   labelStyle: LabelStyle;
   /** Index into the configured map styles. */
@@ -17,7 +19,14 @@ export interface ToolPrefs {
 
 const PREFS_KEY = "map-board:prefs";
 
-const defaultPrefs: ToolPrefs = { ink: "rose", paper: "amber", width: "m", labelStyle: "plain", mapStyle: 0 };
+const defaultPrefs: ToolPrefs = {
+  ink: "rose",
+  paper: "amber",
+  width: "m",
+  textSize: "m",
+  labelStyle: "plain",
+  mapStyle: 0,
+};
 
 function loadPrefs(): ToolPrefs {
   try {

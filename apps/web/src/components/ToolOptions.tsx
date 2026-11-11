@@ -18,6 +18,7 @@ import {
   paperColor,
   type BoardElement,
   type LabelStyle,
+  type TextSize,
   type ToolId,
   type Width,
 } from "engine";
@@ -64,7 +65,11 @@ function ToolSettings({ tool }: { tool: Exclude<ToolId, "select" | "eraser"> }) 
   return (
     <OptionsPanel>
       {tool === "note" ? (
-        <PaperRow value={prefs.paper} onChange={(paper) => engine.setPrefs({ paper })} />
+        <>
+          <PaperRow value={prefs.paper} onChange={(paper) => engine.setPrefs({ paper })} />
+          <Divider />
+          <TextSizeRow value={prefs.textSize} onChange={(textSize) => engine.setPrefs({ textSize })} />
+        </>
       ) : (
         <InkRow value={prefs.ink} onChange={setInk} />
       )}
@@ -108,6 +113,18 @@ function SelectionOptions({ element }: { element: BoardElement }) {
             onChange={(width) => {
               engine.updateSelected({ width });
               engine.setPrefs({ width });
+            }}
+          />
+        </>
+      )}
+      {element.kind === "note" && (
+        <>
+          <Divider />
+          <TextSizeRow
+            value={element.textSize ?? "m"}
+            onChange={(textSize) => {
+              engine.updateSelected({ textSize });
+              engine.setPrefs({ textSize });
             }}
           />
         </>
@@ -279,6 +296,39 @@ function WidthRow({ value, onChange }: { value: Width; onChange: (width: Width) 
             }}
           >
             <span className={cx("rounded-full bg-current", option.dot)} />
+          </IconButton>
+        ))
+      }
+    </Choices>
+  );
+}
+
+const TEXT_SIZES: { size: TextSize; name: string; text: string }[] = [
+  { size: "s", name: "Small text", text: "text-sm" },
+  { size: "m", name: "Medium text", text: "text-lg" },
+  { size: "l", name: "Large text", text: "text-2xl" },
+];
+
+function TextSizeRow({ value, onChange }: { value: TextSize; onChange: (size: TextSize) => void }) {
+  const current = TEXT_SIZES.find((option) => option.size === value) ?? TEXT_SIZES[1]!;
+  const letter = (text: string) => (
+    <span className={cx("font-hand leading-none font-semibold", text)}>A</span>
+  );
+  return (
+    <Choices label="Text size" current={letter(current.text)}>
+      {(picked) =>
+        TEXT_SIZES.map((option) => (
+          <IconButton
+            compact
+            key={option.size}
+            label={option.name}
+            active={value === option.size}
+            onClick={() => {
+              onChange(option.size);
+              picked();
+            }}
+          >
+            {letter(option.text)}
           </IconButton>
         ))
       }

@@ -2,7 +2,14 @@ import { Marker, type Map as MapLibreMap } from "maplibre-gl";
 import { zoomScale, type ScaleRange } from "../geo.ts";
 import { inkColor, paperColor } from "../palette.ts";
 import { scaleRangeFor, type Scene } from "../scene.ts";
-import { isLine, type BoardElement, type Label, type LabelStyle, type LngLat } from "../types.ts";
+import {
+  isLine,
+  type BoardElement,
+  type Label,
+  type LabelStyle,
+  type LngLat,
+  type TextSize,
+} from "../types.ts";
 
 export interface PointCallbacks {
   click(id: string, event: MouseEvent): void;
@@ -42,6 +49,9 @@ interface Entry {
 const SELECTED = ["outline-2", "outline-dashed", "outline-offset-4", "outline-teal-500"];
 const SNAP_TARGET = ["outline-3", "outline-offset-4", "outline-sky-400"];
 const ERASING = ["opacity-30"];
+
+/** Post-it text sizes. Kept as literals so Tailwind picks them up. */
+const NOTE_TEXT: Record<TextSize, string> = { s: "text-base", m: "text-xl", l: "text-3xl" };
 
 /** Smallest and largest post-it size when resizing, in px at base size. */
 const NOTE_MIN = [80, 40] as const;
@@ -526,7 +536,7 @@ export class PointsRenderer {
         // A strip of washi tape holding the note to the map.
         body.append(el("absolute -top-2 left-1/2 h-4 w-12 -translate-x-1/2 rotate-3 bg-white/55 shadow-sm"));
         const text = el(
-          "font-hand text-xl leading-[1.1] font-medium text-stone-800 whitespace-pre-wrap break-words outline-none empty:before:text-stone-500/70 empty:before:content-[attr(data-placeholder)]",
+          `font-hand ${NOTE_TEXT[element.textSize ?? "m"]} leading-[1.1] font-medium text-stone-800 whitespace-pre-wrap break-words outline-none empty:before:text-stone-500/70 empty:before:content-[attr(data-placeholder)]`,
         );
         text.dataset.noteText = "";
         text.dataset.placeholder = "Write something…";
