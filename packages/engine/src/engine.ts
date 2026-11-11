@@ -28,6 +28,8 @@ import {
 export interface EngineOptions {
   /** Basemaps to choose from; the first is the default. */
   styles: MapStyleOption[];
+  /** URL that opens a board, used by a linked marker's open button. */
+  boardUrl?: (id: string) => string;
 }
 
 export interface SelectedPatch {
@@ -60,7 +62,7 @@ export interface Engine {
    * label, the name is typed on the map first.
    */
   linkSelectedToNewBoard(): void;
-  /** Unlinks the selected marker; the board's name stays as its label. */
+  /** Unlinks the selected marker. It's left without a label. */
   unlinkSelected(): void;
   undo(): void;
   redo(): void;
@@ -118,6 +120,7 @@ const isTyping = (target: EventTarget | null) =>
 export function createEngine(container: HTMLElement, options: EngineOptions): Engine {
   const state = createUiState();
   const styles = options.styles;
+  const boardUrl = options.boardUrl ?? ((id: string) => `#/board/${id}`);
   const styleIndex = () => Math.min(state.$prefs.get().mapStyle, styles.length - 1);
 
   container.classList.add("em-root");
@@ -211,6 +214,7 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
       board?.update(id, { label: text ? { text, style } : undefined });
     },
     boardName: (id) => findBoard(id)?.name ?? null,
+    openBoard: (id) => window.open(boardUrl(id), "_blank", "noopener"),
   });
   const lines = new LinesRenderer(map, scene);
 
@@ -500,12 +504,7 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
       const id = state.$selection.get();
       const element = id ? scene.elements.get(id) : undefined;
       if (!id || element?.kind !== "marker" || !element.boardId) return;
-      const name = findBoard(element.boardId)?.name;
-      board?.update(id, {
-        kind: "marker",
-        boardId: undefined,
-        label: name ? { text: name, style: "box" } : undefined,
-      });
+      board?.update(id, { kind: "marker", boardId: undefined, label: undefined });
     },
     undo: () => board?.undo(),
     redo: () => board?.redo(),

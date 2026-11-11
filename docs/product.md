@@ -6,7 +6,9 @@
 - Arrow: drawn exactly like a line, with an arrowhead at one end
 - Board link: a marker can link to another board. No separate pin tool.
   - Its label is the board's name, always in box style, with a ↗ suffix. Renaming the board renames the label.
-  - Selected: open, change board, unlink. Unlinking keeps the name as a normal label.
+  - Linking: pick an existing board or create a new one.
+  - Selected: open, change board, unlink. Unlinking removes the label.
+  - The ↗ on the label opens the board.
   - One-time hint about it the first time you place a marker.
 - Drawings snap to a post-it or marker if one is in the area. Snapped lines follow when it moves; only the last part of the line moves.
 - Export and import as JSON for backup from day one. Import creates a new board.

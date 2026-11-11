@@ -7,7 +7,7 @@ import { BoardLinkHint, EmptyHint, Toasts } from "./components/Notices.tsx";
 import { Toolbar } from "./components/Toolbar.tsx";
 import { ToolOptions } from "./components/ToolOptions.tsx";
 import { EngineContext, mapStyles } from "./lib/engine.ts";
-import { rememberBoard, useBoardId } from "./lib/router.ts";
+import { boardUrl, rememberBoard, useBoardId } from "./lib/router.ts";
 
 export function App() {
   const host = useRef<HTMLDivElement>(null);
@@ -16,7 +16,7 @@ export function App() {
 
   // The engine owns the map and never re-renders through React.
   useEffect(() => {
-    const instance = createEngine(host.current!, { styles: mapStyles });
+    const instance = createEngine(host.current!, { styles: mapStyles, boardUrl });
     setEngine(instance);
     return () => {
       instance.destroy();

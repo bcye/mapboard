@@ -24,6 +24,8 @@ export interface PointCallbacks {
   /** A label edit finished; empty text removes the label. */
   labelText(id: string, text: string, style: LabelStyle): void;
   boardName(boardId: string): string | null;
+  /** The open button on a linked marker's label was pressed. */
+  openBoard(boardId: string): void;
 }
 
 type EntryKind = "marker" | "note" | "line-label";
@@ -580,17 +582,42 @@ export class PointsRenderer {
     return node;
   }
 
-  /** A linked marker's label: the board's name in a box, with an "opens elsewhere" mark. */
+  /** A linked marker's label: the board's name in a box, with a button that opens it. */
   private boardLabel(boardId: string): HTMLElement {
     const node = el(`${LABEL_BASE} ${LABEL_POSITION.marker} ${labelClasses("box", "ink")}`);
     node.dataset.boardLink = "";
     node.textContent = this.callbacks.boardName(boardId) ?? "Linked board";
-    node.append(
+    node.append(this.openButton(boardId));
+    return node;
+  }
+
+  /**
+   * The ↗ on a linked marker's label opens the board. Its events never reach
+   * the map or the Marker, so pressing it doesn't select or drag the marker.
+   */
+  private openButton(boardId: string): HTMLElement {
+    const button = el(
+      "relative -my-1 -mr-1.5 ml-0.5 inline-grid cursor-pointer after:absolute after:-inset-1.5 place-items-center rounded-md p-1 align-[-3px] text-stone-500 transition hover:bg-violet-100 hover:text-violet-600 active:scale-90",
+      "button",
+    );
+    button.setAttribute("type", "button");
+    button.title = "Open board in a new tab";
+    button.setAttribute("aria-label", "Open board in a new tab");
+    button.append(
       svg(
-        `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="ml-1 inline-block align-[-1px] text-stone-500"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>`,
+        `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>`,
       ),
     );
-    return node;
+    const stop = (event: Event) => event.stopPropagation();
+    for (const type of ["mousedown", "touchstart", "pointerdown", "dblclick"] as const) {
+      button.addEventListener(type, stop);
+    }
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      event.preventDefault();
+      this.callbacks.openBoard(boardId);
+    });
+    return button;
   }
 
   private labelClass(kind: EntryKind, style: LabelStyle, color: string) {
