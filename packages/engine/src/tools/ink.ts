@@ -1,4 +1,4 @@
-import { dist, polylineLength, roundCoord } from "../geo.ts";
+import { dist, polylineLength, roundCoord, SCALE_RANGE, zoomScale } from "../geo.ts";
 import { uid } from "../id.ts";
 import type { InkXY } from "../ink.ts";
 import { inkColor, STROKE_SIZE } from "../palette.ts";
@@ -25,10 +25,9 @@ export function createInkTool(ctx: ToolContext, kind: "stroke" | "arrow"): Tool 
 
   const render = () => {
     const prefs = ctx.state.$prefs.get();
-    const color = inkColor(prefs.ink).hex;
-    const size = STROKE_SIZE[prefs.width];
-    if (kind === "stroke") ctx.draft.drawStroke(points, size, color);
-    else ctx.draft.drawArrow(points, size, color);
+    const path = points.map(([x, y]): [number, number] => [x, y]);
+    const scale = zoomScale(ctx.map.getZoom(), SCALE_RANGE.line);
+    ctx.draft.draw(path, STROKE_SIZE[prefs.width], scale, inkColor(prefs.ink).hex, kind === "arrow");
   };
 
   const reset = () => {

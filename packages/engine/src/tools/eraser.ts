@@ -9,8 +9,9 @@ export function createEraserTool(ctx: ToolContext): Tool {
   const test = (p: ScreenPoint) => {
     const rect = ctx.map.getContainer().getBoundingClientRect();
     const point = ctx.points.hitTest(rect.left + p.x, rect.top + p.y, 4);
+    // Points sit above lines, so touching one doesn't reach a line under it.
     if (point) hits.add(point);
-    for (const id of ctx.lines.hitTest(p.x, p.y, 8)) hits.add(id);
+    else for (const id of ctx.lines.hitTest(p.x, p.y, 8)) hits.add(id);
   };
 
   const preview = () => {

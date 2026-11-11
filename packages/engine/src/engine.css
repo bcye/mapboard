@@ -41,8 +41,16 @@
   touch-action: none;
 }
 
-.em-scale {
-  will-change: transform;
+.em-root .em-head {
+  pointer-events: none;
+}
+
+.em-resize {
+  display: none;
+}
+
+.em-root[data-tool="select"] .em-point.em-selected .em-resize {
+  display: block;
 }
 
 .em-draft {
