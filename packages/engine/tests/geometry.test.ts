@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { fromMerc, SCALE_RANGE, toMerc, worldSize, zoomScale, type XY } from "../src/geo.ts";
+import { BASE_ZOOM, fromMerc, SCALE_RANGE, toMerc, worldSize, zoomScale, type XY } from "../src/geo.ts";
 import { bendEnd, placeHead, smoothLine } from "../src/ink.ts";
 import { Scene } from "../src/scene.ts";
 import type { BoardElement, LineElement, MarkerElement, NoteElement } from "../src/types.ts";
@@ -14,12 +14,12 @@ describe("geometry", () => {
     expect(toMerc([0, 0])).toEqual([0.5, 0.5]);
   });
 
-  it("scales elements at half the map's rate, within their range", () => {
-    expect(zoomScale(6, 6, SCALE_RANGE.note)).toBe(1);
-    expect(zoomScale(7, 6, SCALE_RANGE.line)).toBeCloseTo(Math.SQRT2);
-    expect(zoomScale(5, 6, SCALE_RANGE.note)).toBeCloseTo(Math.SQRT1_2);
-    expect(zoomScale(20, 6, SCALE_RANGE.note)).toBe(1.25);
-    expect(zoomScale(0, 6, SCALE_RANGE.note)).toBe(0.4);
+  it("scales elements with the zoom only, at half the map's rate, within their range", () => {
+    expect(zoomScale(BASE_ZOOM, SCALE_RANGE.note)).toBe(1);
+    expect(zoomScale(BASE_ZOOM + 1, SCALE_RANGE.line)).toBeCloseTo(Math.SQRT2);
+    expect(zoomScale(BASE_ZOOM - 1, SCALE_RANGE.note)).toBeCloseTo(Math.SQRT1_2);
+    expect(zoomScale(16, SCALE_RANGE.note)).toBe(1.25);
+    expect(zoomScale(0, SCALE_RANGE.note)).toBe(0.4);
   });
 
   it("smooths a line but keeps its ends", () => {
@@ -116,23 +116,23 @@ describe("scene", () => {
     expect(path[0]).toEqual(toMerc([0, 0]));
   });
 
-  it("sizes a post-it's snap box for the zoom", () => {
+  it("sizes a post-it's snap box for the zoom, whatever zoom it was drawn at", () => {
     const note: NoteElement = {
       id: "n",
       kind: "note",
       order: "a2",
-      refZoom: 4,
+      refZoom: 9,
       at: [0, 0],
       text: "",
       color: "amber",
     };
     const { scene } = sceneWith(note);
     scene.sizeOf = () => ({ width: 100, height: 60 });
-    const atRef = scene.snapBox("n", 4, 0)!;
-    expect(atRef.halfWidth * worldSize(4)).toBeCloseTo(50);
+    const atBase = scene.snapBox("n", BASE_ZOOM, 0)!;
+    expect(atBase.halfWidth * worldSize(BASE_ZOOM)).toBeCloseTo(50);
     // Two zoom levels in, the map is four times as big, the post-it only 1.25 times (its limit).
-    const zoomedIn = scene.snapBox("n", 6, 0)!;
-    expect(zoomedIn.halfWidth * worldSize(6)).toBeCloseTo(50 * 1.25);
+    const zoomedIn = scene.snapBox("n", BASE_ZOOM + 2, 0)!;
+    expect(zoomedIn.halfWidth * worldSize(BASE_ZOOM + 2)).toBeCloseTo(50 * 1.25);
   });
 
   it("stacks by order", () => {

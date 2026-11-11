@@ -5,7 +5,7 @@ import type {
   GeoJSONSource,
   Map as MapLibreMap,
 } from "maplibre-gl";
-import { fromMerc, polylineLength, SCALE_RANGE, worldSize, type XY } from "../geo.ts";
+import { fromMerc, polylineLength, SCALE_RANGE, worldSize, zoomScale, type XY } from "../geo.ts";
 import { smoothLine } from "../ink.ts";
 import { inkColor, SELECTION_HEX, STROKE_SIZE } from "../palette.ts";
 import type { Scene } from "../scene.ts";
@@ -25,26 +25,21 @@ interface LineProps {
   id: string;
   color: string;
   rank: number;
-  /** Width in px at the reference zoom. */
+  /** Width in px at base size. */
   width: number;
-  refZoom: number;
 }
 
 type LineFeature = Feature<LineString | Point, LineProps>;
 
 /**
- * `value(scale)` at every integer zoom, where `scale` is the line's zoom scale
+ * `value(scale)` at every integer zoom, where `scale` is the line zoom scale
  * there (see `zoomScale`). MapLibre interpolates between the stops on the GPU,
  * with the same √2 per zoom level, so widths change smoothly.
  */
 function byZoomScale(
-  value: (scale: ExpressionSpecification) => ExpressionSpecification,
+  value: (scale: number) => ExpressionSpecification,
 ): DataDrivenPropertyValueSpecification<number> {
-  const [min, max] = SCALE_RANGE.line;
-  const stops = Array.from({ length: 25 }, (_, zoom) => [
-    zoom,
-    value(["max", min, ["min", max, ["^", 2, ["/", ["-", zoom, ["get", "refZoom"]], 2]]]]),
-  ]);
+  const stops = Array.from({ length: 25 }, (_, zoom) => [zoom, value(zoomScale(zoom, SCALE_RANGE.line))]);
   return ["interpolate", ["exponential", Math.SQRT2], ["zoom"], ...stops.flat()] as ExpressionSpecification;
 }
 
@@ -54,7 +49,7 @@ const erasing: ExpressionSpecification = ["boolean", ["feature-state", "erasing"
 /** A stroke or arrow as a smoothed line, in lng/lat. Very short strokes are dots. */
 export function lineFeature(line: LineElement, scene: Scene): LineFeature {
   const size = worldSize(line.refZoom);
-  // Work in px at the element's reference zoom.
+  // Work in px at the zoom it was drawn at, where its shape was made.
   const path = scene.linePath(line).map(([x, y]): XY => [x * size, y * size]);
   const toLngLat = ([x, y]: XY) => fromMerc([x / size, y / size]);
   const properties: LineProps = {
@@ -62,7 +57,6 @@ export function lineFeature(line: LineElement, scene: Scene): LineFeature {
     color: inkColor(line.color).hex,
     rank: scene.rank(line.id),
     width: STROKE_SIZE[line.width],
-    refZoom: line.refZoom,
   };
   const geometry: LineString | Point =
     path.length < 2 || polylineLength(path) < 1

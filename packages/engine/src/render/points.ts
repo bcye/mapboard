@@ -26,7 +26,6 @@ interface Entry {
   root: HTMLElement;
   scale: HTMLElement;
   body: HTMLElement;
-  refZoom: number;
   range: ScaleRange;
   /** Zoom scale currently applied. */
   scaleValue: number;
@@ -40,7 +39,7 @@ const SELECTED = ["outline-2", "outline-dashed", "outline-offset-4", "outline-te
 const SNAP_TARGET = ["outline-3", "outline-offset-4", "outline-sky-400"];
 const ERASING = ["opacity-30"];
 
-/** Smallest and largest post-it size when resizing, in px at its reference zoom. */
+/** Smallest and largest post-it size when resizing, in px at base size. */
 const NOTE_MIN = [80, 40] as const;
 const NOTE_MAX = [480, 480] as const;
 
@@ -113,7 +112,7 @@ export class PointsRenderer {
         continue;
       }
       if (entry && entry.kind !== want.kind) this.remove(entry);
-      const current = this.entries.get(id) ?? this.create(id, want.kind, element.refZoom);
+      const current = this.entries.get(id) ?? this.create(id, want.kind);
       current.marker.setLngLat(want.at);
       current.root.style.zIndex = String(this.scene.rank(id));
       if (current.key !== want.key && this.editing !== id) {
@@ -259,7 +258,7 @@ export class PointsRenderer {
     return { kind: element.kind, at, key: JSON.stringify(visual) };
   }
 
-  private create(id: string, kind: EntryKind, refZoom: number): Entry {
+  private create(id: string, kind: EntryKind): Entry {
     const root = el("em-point");
     root.dataset.id = id;
     const scale = el("em-scale");
@@ -279,7 +278,6 @@ export class PointsRenderer {
       root,
       scale,
       body,
-      refZoom,
       range: scaleRangeFor(kind),
       scaleValue: 0,
       key: "",
@@ -317,7 +315,7 @@ export class PointsRenderer {
   }
 
   private applyScale(entry: Entry, zoom: number) {
-    const value = zoomScale(zoom, entry.refZoom, entry.range);
+    const value = zoomScale(zoom, entry.range);
     // Mostly clamped, so most zoom events change nothing.
     if (value === entry.scaleValue) return;
     entry.scaleValue = value;

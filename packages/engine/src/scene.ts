@@ -134,7 +134,7 @@ export class Scene {
     const center = toMerc(at);
     if (element.kind === "marker") return { center, halfWidth: gap * unit, halfHeight: gap * unit };
     const size = this.sizeOf(pointId) ?? FALLBACK_SIZE[element.kind];
-    const scale = zoomScale(zoom, element.refZoom, scaleRangeFor(element.kind));
+    const scale = zoomScale(zoom, scaleRangeFor(element.kind));
     return {
       center,
       halfWidth: ((size.width / 2) * scale + gap) * unit,

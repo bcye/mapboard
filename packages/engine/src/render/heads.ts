@@ -158,9 +158,9 @@ export class ArrowHeads {
    * along the line, as the element it points at changes size relative to the map.
    */
   private place(head: Head, zoom: number) {
-    const scale = zoomScale(zoom, head.refZoom, SCALE_RANGE.line);
+    const scale = zoomScale(zoom, SCALE_RANGE.line);
     const box = head.to ? (this.scene.snapBox(head.to, zoom, GAP) ?? undefined) : undefined;
-    // Aim using the head's length at the reference zoom, so the angle doesn't change with zoom.
+    // Aim using the head's length at the zoom it was drawn at, so the angle doesn't change with zoom.
     const placed = placeHead(head.path, headLength(head.width) / worldSize(head.refZoom), box);
     const key = placed ? `${placed.at.join()}:${placed.direction.join()}:${scale}` : "none";
     if (key === head.placed) return;

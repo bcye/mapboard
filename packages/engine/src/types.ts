@@ -17,10 +17,7 @@ interface Base {
   id: string;
   /** Sortable string for stacking (fractional index). */
   order: string;
-  /**
-   * Map zoom when the element was created. Drawn size is
-   * `size × clamp(2^((zoom − refZoom) / 2))`, see `zoomScale`.
-   */
+  /** Map zoom when the element was created. Not used for its size, see `zoomScale`. */
   refZoom: number;
   label?: Label;
 }
@@ -48,7 +45,7 @@ export interface NoteElement extends Base {
   text: string;
   color: string;
   /**
-   * Size set by resizing, in px at the reference zoom. The height is a minimum:
+   * Size set by resizing, in px at base size. The height is a minimum:
    * the post-it still grows to fit its text. Unset means the default size.
    */
   size?: [width: number, height: number];

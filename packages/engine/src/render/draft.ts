@@ -21,23 +21,25 @@ export class DraftLayer {
     this.resize();
   }
 
-  draw(points: readonly XY[], width: number, color: string, arrow: boolean) {
+  /** `width` is the base width, drawn at `scale` like finished lines. */
+  draw(points: readonly XY[], width: number, scale: number, color: string, arrow: boolean) {
     const ctx = this.context;
     this.clear();
     const path = smoothLine(points);
     if (path.length === 0) return;
+    const length = headLength(width) * scale;
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
-    ctx.lineWidth = width;
+    ctx.lineWidth = width * scale;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.beginPath();
     path.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
     if (path.length === 1) ctx.lineTo(path[0]![0], path[0]![1]);
     ctx.stroke();
-    const head = arrow ? placeHead(path, headLength(width)) : null;
+    const head = arrow ? placeHead(path, length) : null;
     if (head) {
-      const [a, b] = headWings(head, headLength(width));
+      const [a, b] = headWings(head, length);
       ctx.beginPath();
       ctx.moveTo(a[0], a[1]);
       ctx.lineTo(head.at[0], head.at[1]);

@@ -25,7 +25,7 @@ export function fromMerc([x, y]: XY): LngLat {
 /** Size of one Mercator unit in px at `zoom`. */
 export const worldSize = (zoom: number) => TILE_SIZE * 2 ** zoom;
 
-/** Smallest and largest scale an element reaches, relative to its size at its reference zoom. */
+/** Smallest and largest scale an element reaches, relative to its base size. */
 export type ScaleRange = readonly [min: number, max: number];
 
 /** How far each kind of element grows and shrinks with zoom. */
@@ -37,12 +37,16 @@ export const SCALE_RANGE = {
   line: [0.45, 1.6],
 } as const satisfies Record<string, ScaleRange>;
 
+/** Zoom at which elements have their base size, about a continent in view. */
+export const BASE_ZOOM = 4;
+
 /**
- * Scale of an element drawn at `refZoom` when the map is at `zoom`: it grows
- * and shrinks at half the map's rate (√2 per zoom level), within `range`.
+ * Scale of an element when the map is at `zoom`. It only depends on the zoom,
+ * not on when the element was drawn: elements grow and shrink at half the
+ * map's rate (√2 per zoom level) from BASE_ZOOM, within `range`.
  */
-export const zoomScale = (zoom: number, refZoom: number, [min, max]: ScaleRange) =>
-  Math.min(max, Math.max(min, 2 ** ((zoom - refZoom) / 2)));
+export const zoomScale = (zoom: number, [min, max]: ScaleRange) =>
+  Math.min(max, Math.max(min, 2 ** ((zoom - BASE_ZOOM) / 2)));
 
 export const sub = (a: XY, b: XY): XY => [a[0] - b[0], a[1] - b[1]];
 export const add = (a: XY, b: XY): XY => [a[0] + b[0], a[1] + b[1]];
