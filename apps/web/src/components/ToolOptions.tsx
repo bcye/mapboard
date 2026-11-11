@@ -4,6 +4,8 @@ import {
   $boards,
   INK,
   PAPER,
+  inkColor,
+  paperColor,
   type BoardElement,
   type Label,
   type LabelStyle,
@@ -14,7 +16,7 @@ import { useState, type ReactNode } from "react";
 import { cx } from "../lib/cx.ts";
 import { useEngine } from "../lib/engine.ts";
 import { boardUrl } from "../lib/router.ts";
-import { Divider, IconButton, Panel, Swatch } from "./ui.tsx";
+import { Divider, IconButton, Panel, PopoverButton, Swatch, SwatchDot } from "./ui.tsx";
 
 /** Second toolbar: settings for the active tool, or for the selected element. */
 export function ToolOptions() {
@@ -223,36 +225,69 @@ function LabelEditor({ label, onDone }: { label: Label | undefined; onDone: () =
   );
 }
 
-function InkRow({ value, onChange }: { value: string; onChange: (key: string) => void }) {
+/**
+ * A row of choices. Shown inline from `sm` up; on phones it collapses into one
+ * button showing the current choice, which opens the row in a popover.
+ */
+function Choices({
+  label,
+  current,
+  children,
+}: {
+  label: string;
+  current: ReactNode;
+  children: (pick: () => void) => ReactNode;
+}) {
   return (
     <>
-      {INK.map((color) => (
-        <Swatch
-          key={color.key}
-          label={color.name}
-          colorClass={color.bg}
-          active={value === color.key}
-          onClick={() => onChange(color.key)}
-        />
-      ))}
+      <div className="hidden sm:contents">{children(() => {})}</div>
+      <PopoverButton label={label} trigger={current} className="sm:hidden">
+        {(close) => children(close)}
+      </PopoverButton>
     </>
+  );
+}
+
+function InkRow({ value, onChange }: { value: string; onChange: (key: string) => void }) {
+  return (
+    <Choices label="Color" current={<SwatchDot colorClass={inkColor(value).bg} />}>
+      {(picked) =>
+        INK.map((color) => (
+          <Swatch
+            key={color.key}
+            label={color.name}
+            colorClass={color.bg}
+            active={value === color.key}
+            onClick={() => {
+              onChange(color.key);
+              picked();
+            }}
+          />
+        ))
+      }
+    </Choices>
   );
 }
 
 function PaperRow({ value, onChange }: { value: string; onChange: (key: string) => void }) {
   return (
-    <>
-      {PAPER.map((color) => (
-        <Swatch
-          key={color.key}
-          label={color.name}
-          colorClass={color.bg}
-          size="paper"
-          active={value === color.key}
-          onClick={() => onChange(color.key)}
-        />
-      ))}
-    </>
+    <Choices label="Paper color" current={<SwatchDot colorClass={paperColor(value).bg} size="paper" />}>
+      {(picked) =>
+        PAPER.map((color) => (
+          <Swatch
+            key={color.key}
+            label={color.name}
+            colorClass={color.bg}
+            size="paper"
+            active={value === color.key}
+            onClick={() => {
+              onChange(color.key);
+              picked();
+            }}
+          />
+        ))
+      }
+    </Choices>
   );
 }
 
@@ -263,20 +298,26 @@ const WIDTHS: { width: Width; name: string; dot: string }[] = [
 ];
 
 function WidthRow({ value, onChange }: { value: Width; onChange: (width: Width) => void }) {
+  const current = WIDTHS.find((option) => option.width === value) ?? WIDTHS[1]!;
   return (
-    <>
-      {WIDTHS.map((option) => (
-        <IconButton
-          compact
-          key={option.width}
-          label={option.name}
-          active={value === option.width}
-          onClick={() => onChange(option.width)}
-        >
-          <span className={cx("rounded-full bg-current", option.dot)} />
-        </IconButton>
-      ))}
-    </>
+    <Choices label="Line width" current={<span className={cx("rounded-full bg-current", current.dot)} />}>
+      {(picked) =>
+        WIDTHS.map((option) => (
+          <IconButton
+            compact
+            key={option.width}
+            label={option.name}
+            active={value === option.width}
+            onClick={() => {
+              onChange(option.width);
+              picked();
+            }}
+          >
+            <span className={cx("rounded-full bg-current", option.dot)} />
+          </IconButton>
+        ))
+      }
+    </Choices>
   );
 }
 
