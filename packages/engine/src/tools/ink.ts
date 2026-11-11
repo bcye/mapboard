@@ -25,10 +25,8 @@ export function createInkTool(ctx: ToolContext, kind: "stroke" | "arrow"): Tool 
 
   const render = () => {
     const prefs = ctx.state.$prefs.get();
-    const color = inkColor(prefs.ink).hex;
-    const size = STROKE_SIZE[prefs.width];
-    if (kind === "stroke") ctx.draft.drawStroke(points, size, color);
-    else ctx.draft.drawArrow(points, size, color);
+    const path = points.map(([x, y]): [number, number] => [x, y]);
+    ctx.draft.draw(path, STROKE_SIZE[prefs.width], inkColor(prefs.ink).hex, kind === "arrow");
   };
 
   const reset = () => {

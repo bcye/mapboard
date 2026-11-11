@@ -1,7 +1,7 @@
 import { Marker, type Map as MapLibreMap } from "maplibre-gl";
-import { zoomScale } from "../geo.ts";
+import { zoomScale, type ScaleRange } from "../geo.ts";
 import { inkColor, paperColor } from "../palette.ts";
-import type { Scene } from "../scene.ts";
+import { scaleRangeFor, type Scene } from "../scene.ts";
 import { isLine, type BoardElement, type Label, type LngLat } from "../types.ts";
 
 export interface PointCallbacks {
@@ -10,6 +10,9 @@ export interface PointCallbacks {
   dragStart(id: string): void;
   drag(id: string, at: LngLat): void;
   dragEnd(id: string, at: LngLat): void;
+  /** A post-it is being resized; `at` is its new centre. */
+  resize(id: string, at: LngLat): void;
+  resizeEnd(id: string, at: LngLat, size: [width: number, height: number]): void;
   noteText(id: string, text: string): void;
   boardName(boardId: string): string | null;
 }
@@ -24,6 +27,9 @@ interface Entry {
   scale: HTMLElement;
   body: HTMLElement;
   refZoom: number;
+  range: ScaleRange;
+  /** Zoom scale currently applied. */
+  scaleValue: number;
   /** Serialized visual state; the body is only rebuilt when it changes. */
   key: string;
   dragged: boolean;
@@ -33,6 +39,12 @@ interface Entry {
 const SELECTED = ["outline-2", "outline-dashed", "outline-offset-4", "outline-teal-500"];
 const SNAP_TARGET = ["outline-3", "outline-offset-4", "outline-sky-400"];
 const ERASING = ["opacity-30"];
+
+/** Smallest and largest post-it size when resizing, in px at its reference zoom. */
+const NOTE_MIN = [80, 40] as const;
+const NOTE_MAX = [480, 480] as const;
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 const LABEL_CLASSES: Record<Label["style"], string> = {
   plain:
@@ -132,9 +144,7 @@ export class PointsRenderer {
   }
 
   rescale(zoom: number) {
-    for (const entry of this.entries.values()) {
-      entry.scale.style.transform = `scale(${Math.min(zoomScale(zoom, entry.refZoom), 64)})`;
-    }
+    for (const entry of this.entries.values()) this.applyScale(entry, zoom);
   }
 
   clear() {
@@ -156,8 +166,10 @@ export class PointsRenderer {
 
   setSelected(id: string | null) {
     this.toggle(this.selected, SELECTED, false);
+    if (this.selected) this.entries.get(this.selected)?.root.classList.remove("em-selected");
     this.selected = id;
     this.toggle(id, SELECTED, true);
+    if (id) this.entries.get(id)?.root.classList.add("em-selected");
   }
 
   setSnapTarget(id: string | null) {
@@ -260,9 +272,22 @@ export class PointsRenderer {
       anchor: kind === "marker" ? "bottom" : "center",
       subpixelPositioning: true,
     });
-    const entry: Entry = { id, kind, marker, root, scale, body, refZoom, key: "", dragged: false };
+    const entry: Entry = {
+      id,
+      kind,
+      marker,
+      root,
+      scale,
+      body,
+      refZoom,
+      range: scaleRangeFor(kind),
+      scaleValue: 0,
+      key: "",
+      dragged: false,
+    };
     marker.setLngLat([0, 0]).addTo(this.map);
     marker.setDraggable(this.interactive && kind !== "line-label");
+    if (this.selected === id) root.classList.add("em-selected");
     marker.on("dragstart", () => {
       entry.dragged = true;
       this.callbacks.dragStart(id);
@@ -287,8 +312,59 @@ export class PointsRenderer {
       this.callbacks.doubleClick(id);
     });
     this.entries.set(id, entry);
-    entry.scale.style.transform = `scale(${Math.min(zoomScale(this.map.getZoom(), refZoom), 64)})`;
+    this.applyScale(entry, this.map.getZoom());
     return entry;
+  }
+
+  private applyScale(entry: Entry, zoom: number) {
+    const value = zoomScale(zoom, entry.refZoom, entry.range);
+    // Mostly clamped, so most zoom events change nothing.
+    if (value === entry.scaleValue) return;
+    entry.scaleValue = value;
+    entry.scale.style.transform = `scale(${value})`;
+  }
+
+  /**
+   * Resizes a post-it from its corner handle. The top-left corner stays put,
+   * the text keeps its size, and the height never goes below the text's.
+   */
+  private startResize(entry: Entry, handle: HTMLElement, event: PointerEvent) {
+    if (event.button !== 0) return;
+    try {
+      handle.setPointerCapture(event.pointerId);
+    } catch {
+      // Best-effort, as for drawing.
+    }
+    const { body, marker } = entry;
+    const scale = entry.scaleValue;
+    const start = { x: event.clientX, y: event.clientY, width: body.offsetWidth, height: body.offsetHeight };
+    const center = this.map.project(marker.getLngLat());
+    const left = center.x - (start.width * scale) / 2;
+    const top = center.y - (start.height * scale) / 2;
+    let result: { at: LngLat; size: [number, number] } | null = null;
+
+    const move = (e: PointerEvent) => {
+      if (e.pointerId !== event.pointerId) return;
+      const width = Math.round(clamp(start.width + (e.clientX - start.x) / scale, NOTE_MIN[0], NOTE_MAX[0]));
+      const minHeight = clamp(start.height + (e.clientY - start.y) / scale, NOTE_MIN[1], NOTE_MAX[1]);
+      body.style.width = `${width}px`;
+      body.style.minHeight = `${Math.round(minHeight)}px`;
+      const height = body.offsetHeight;
+      const p = this.map.unproject([left + (width * scale) / 2, top + (height * scale) / 2]);
+      result = { at: [p.lng, p.lat], size: [width, height] };
+      marker.setLngLat(result.at);
+      this.callbacks.resize(entry.id, result.at);
+    };
+    const end = (e: PointerEvent) => {
+      if (e.pointerId !== event.pointerId) return;
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", end);
+      handle.removeEventListener("pointercancel", end);
+      if (result) this.callbacks.resizeEnd(entry.id, result.at, result.size);
+    };
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", end);
+    handle.addEventListener("pointercancel", end);
   }
 
   private remove(entry: Entry) {
@@ -325,18 +401,22 @@ export class PointsRenderer {
       }
       case "note": {
         const body = el(
-          `relative w-36 min-h-24 rounded-[3px] px-3 pt-4 pb-3 shadow-lg shadow-stone-900/20 ${paperColor(element.color).bg}`,
+          `relative w-36 min-h-18 rounded-[3px] px-3 pt-3 pb-2.5 shadow-lg shadow-stone-900/20 ${paperColor(element.color).bg}`,
         );
+        if (element.size) {
+          body.style.width = `${element.size[0]}px`;
+          body.style.minHeight = `${element.size[1]}px`;
+        }
         body.style.rotate = `${tilt(element.id)}deg`;
         // A strip of washi tape holding the note to the map.
-        body.append(el("absolute -top-2 left-1/2 h-4 w-14 -translate-x-1/2 rotate-3 bg-white/55 shadow-sm"));
+        body.append(el("absolute -top-2 left-1/2 h-4 w-12 -translate-x-1/2 rotate-3 bg-white/55 shadow-sm"));
         const text = el(
-          "font-hand text-[22px] leading-6 font-medium text-stone-800 whitespace-pre-wrap break-words outline-none empty:before:text-stone-500/70 empty:before:content-[attr(data-placeholder)]",
+          "font-hand text-xl leading-[1.1] font-medium text-stone-800 whitespace-pre-wrap break-words outline-none empty:before:text-stone-500/70 empty:before:content-[attr(data-placeholder)]",
         );
         text.dataset.noteText = "";
         text.dataset.placeholder = "Write something…";
         text.textContent = element.text;
-        body.append(text);
+        body.append(text, this.resizeHandle(element.id));
         if (element.label?.text) {
           body.append(this.label(element.label, "absolute left-1/2 top-full mt-2 -translate-x-1/2"));
         }
@@ -370,6 +450,28 @@ export class PointsRenderer {
         return body;
       }
     }
+  }
+
+  /** Corner grip for resizing a selected post-it. Its events never reach the map or the Marker. */
+  private resizeHandle(id: string): HTMLElement {
+    const handle = el("em-resize absolute -right-2 -bottom-2 size-8 cursor-nwse-resize touch-none");
+    handle.append(
+      svg(
+        `<svg viewBox="0 0 12 12" width="12" height="12" class="absolute top-2.5 left-2.5 text-stone-600/60"><path d="M10.5 3.5l-7 7M10.5 7.5l-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+      ),
+    );
+    const stop = (event: Event) => event.stopPropagation();
+    for (const type of ["mousedown", "touchstart", "click", "dblclick"] as const) {
+      handle.addEventListener(type, stop);
+    }
+    handle.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+      // Keeps focus (and editing) on the text, and stops the mouse events that start a drag.
+      event.preventDefault();
+      const entry = this.entries.get(id);
+      if (entry) this.startResize(entry, handle, event);
+    });
+    return handle;
   }
 
   private label(label: Label, position: string): HTMLElement {

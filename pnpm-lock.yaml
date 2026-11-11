@@ -188,9 +188,6 @@ catalogs:
     nanostores:
       specifier: ^1.5.5
       version: 1.5.5
-    perfect-freehand:
-      specifier: ^1.2.3
-      version: 1.2.3
     tailwindcss:
       specifier: ^4.3.5
       version: 4.3.5
@@ -281,9 +278,6 @@ importers:
       nanostores:
         specifier: 'catalog:'
         version: 1.5.5
-      perfect-freehand:
-        specifier: 'catalog:'
-        version: 1.2.3
       y-indexeddb:
         specifier: 'catalog:'
         version: 9.0.12(yjs@13.6.33)
@@ -1419,9 +1413,6 @@ packages:
     resolution: {integrity: sha512-mnvGdvOrIvJOBGUEdGkrVXjN8E/VkIJCkf2eS1DH2yv82ORUlLttmDt0rWY38yYZmVwciZwBUvHM20qxBZf40w==}
     hasBin: true
 
-  perfect-freehand@1.2.3:
-    resolution: {integrity: sha512-bHZSfqDHGNlPpgH2yxXgPHlQSPpEbo+qg7li0M78J9vNAi2yjwLeA4x79BEQhX44lEWpCLSFCeRZwpw0niiXPA==}
-
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
@@ -2388,8 +2379,6 @@ snapshots:
   pbf@5.1.2:
     dependencies:
       resolve-protobuf-schema: 2.1.0
-
-  perfect-freehand@1.2.3: {}
 
   picocolors@1.1.1: {}
 

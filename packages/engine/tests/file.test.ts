@@ -46,6 +46,21 @@ describe("board file", () => {
     expect(result).toMatchObject({ ok: true, skipped: 1 });
   });
 
+  it("keeps a resized post-it's size and skips a broken one", () => {
+    const result = parseBoardFile(
+      JSON.stringify({
+        format: "map-board",
+        version: 1,
+        elements: {
+          n1: { ...note, size: [220, 90] },
+          n2: { ...note, id: "n2", size: [220] },
+          n3: { ...note, id: "n3", size: [0, 90] },
+        },
+      }),
+    );
+    expect(result).toMatchObject({ ok: true, skipped: 2, file: { elements: { n1: { size: [220, 90] } } } });
+  });
+
   it("makes a safe file name", () => {
     expect(boardFileName("Road trip: Côte d'Azur!")).toBe("road-trip-c-te-d-azur.map-board.json");
     expect(boardFileName("")).toBe("board.map-board.json");
