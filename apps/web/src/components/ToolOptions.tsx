@@ -354,7 +354,7 @@ function OwnBoardButton() {
   const content = (
     <>
       <StackPlus size={20} weight="duotone" className="text-violet-600" />
-      Own board
+      Link Board
     </>
   );
   if (others.length === 0) {
