@@ -8,7 +8,7 @@ export type SizeOf = (id: string) => { width: number; height: number } | null;
 /** Temporary positions while something is being dragged. Not saved. */
 export type Override = { at: LngLat } | { offset: XY };
 
-const FALLBACK_SIZE = { note: { width: 144, height: 110 }, pin: { width: 150, height: 44 } };
+const FALLBACK_SIZE = { note: { width: 144, height: 110 } };
 
 /**
  * The board as currently drawn: elements, stacking order, which lines are

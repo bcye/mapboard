@@ -3,11 +3,11 @@ import { $boards, createEngine, type Engine } from "engine";
 import { useEffect, useRef, useState } from "react";
 import { BoardMenu } from "./components/BoardMenu.tsx";
 import { HistoryControls, StylePicker, ZoomControls } from "./components/MapControls.tsx";
-import { EmptyHint, Toasts } from "./components/Notices.tsx";
+import { BoardLinkHint, EmptyHint, Toasts } from "./components/Notices.tsx";
 import { Toolbar } from "./components/Toolbar.tsx";
 import { ToolOptions } from "./components/ToolOptions.tsx";
 import { EngineContext, mapStyles } from "./lib/engine.ts";
-import { boardUrl, rememberBoard, useBoardId } from "./lib/router.ts";
+import { rememberBoard, useBoardId } from "./lib/router.ts";
 
 export function App() {
   const host = useRef<HTMLDivElement>(null);
@@ -16,7 +16,7 @@ export function App() {
 
   // The engine owns the map and never re-renders through React.
   useEffect(() => {
-    const instance = createEngine(host.current!, { styles: mapStyles, boardUrl });
+    const instance = createEngine(host.current!, { styles: mapStyles });
     setEngine(instance);
     return () => {
       instance.destroy();
@@ -51,6 +51,7 @@ function Overlay() {
   return (
     <>
       <EmptyHint />
+      <BoardLinkHint />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-3">
         <BoardMenu />

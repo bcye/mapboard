@@ -28,9 +28,9 @@ export interface LineElement extends Base {
   points: InkPoint[];
   color: string;
   width: Width;
-  /** Id of the marker, note or pin the start is snapped to. */
+  /** Id of the marker or note the start is snapped to. */
   from?: string;
-  /** Id of the marker, note or pin the end is snapped to. */
+  /** Id of the marker or note the end is snapped to. */
   to?: string;
 }
 
@@ -38,6 +38,8 @@ export interface MarkerElement extends Base {
   kind: "marker";
   at: LngLat;
   color: string;
+  /** Board this marker links to. Its label is then that board's name. */
+  boardId?: string;
 }
 
 export interface NoteElement extends Base {
@@ -47,15 +49,7 @@ export interface NoteElement extends Base {
   color: string;
 }
 
-export interface PinElement extends Base {
-  kind: "pin";
-  at: LngLat;
-  /** Board this pin links to. */
-  boardId: string;
-  color: string;
-}
-
-export type PointElement = MarkerElement | NoteElement | PinElement;
+export type PointElement = MarkerElement | NoteElement;
 export type BoardElement = LineElement | PointElement;
 export type ElementKind = BoardElement["kind"];
 
@@ -63,4 +57,4 @@ export const isLine = (el: BoardElement): el is LineElement => el.kind === "stro
 
 export const isPoint = (el: BoardElement): el is PointElement => !isLine(el);
 
-export type ToolId = "select" | "draw" | "arrow" | "marker" | "note" | "pin" | "eraser";
+export type ToolId = "select" | "draw" | "arrow" | "marker" | "note" | "eraser";

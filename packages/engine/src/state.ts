@@ -4,7 +4,7 @@ import type { BoardElement, LabelStyle, ToolId, Width } from "./types.ts";
 
 /** Tool settings, remembered on this device. */
 export interface ToolPrefs {
-  /** Palette key for strokes, arrows, markers and pins. */
+  /** Palette key for strokes, arrows and markers. */
   ink: string;
   /** Palette key for post-its. */
   paper: string;
@@ -42,17 +42,18 @@ export function createUiState() {
   return {
     $tool: atom<ToolId>("select"),
     $prefs,
-    /** Board a new pin links to: a board id, or "new" to create one. */
-    $pinTarget: atom<string>("new"),
-    /** Name for the board a new pin creates. Empty means a default name. */
-    $pinName: atom<string>(""),
+    /** The element placed last with a place tool, e.g. for first-use hints. */
+    $placed: atom<{ id: string; kind: "marker" | "note" } | null>(null),
     $selection: atom<string | null>(null),
     /** Current value of the selected element, kept in sync with the board. */
     $selected: atom<BoardElement | null>(null),
     /** Post-it whose text is being edited. */
     $editing: atom<string | null>(null),
-    /** Label being edited on the map, with the style it will be saved in. */
-    $labelDraft: atom<{ id: string; style: LabelStyle } | null>(null),
+    /**
+     * Label being edited on the map, with the style it will be saved in.
+     * `board` names a new board for a marker to link to instead.
+     */
+    $labelDraft: atom<{ id: string; style: LabelStyle; purpose: "label" | "board" } | null>(null),
     $history: atom<History>({ canUndo: false, canRedo: false }),
     $boardId: atom<string | null>(null),
     $loading: atom<boolean>(true),

@@ -18,3 +18,22 @@ describe("element schema", () => {
     expect(parseElement({ ...marker, label: { text: "Berlin", style: "neon" } })).toBeNull();
   });
 });
+
+describe("board links", () => {
+  it("reads board pins as linked markers", () => {
+    const pin = {
+      id: "p1",
+      kind: "pin",
+      order: "a0",
+      refZoom: 6,
+      at: [-9.1, 38.7],
+      color: "violet",
+      boardId: "b2",
+    };
+    expect(parseElement(pin)).toEqual({ ...pin, kind: "marker" });
+  });
+
+  it("rejects a marker linking to something that isn't a board id", () => {
+    expect(parseElement({ ...marker, boardId: 7 })).toBeNull();
+  });
+});

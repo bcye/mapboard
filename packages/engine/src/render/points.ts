@@ -16,7 +16,7 @@ export interface PointCallbacks {
   boardName(boardId: string): string | null;
 }
 
-type EntryKind = "marker" | "note" | "pin" | "line-label";
+type EntryKind = "marker" | "note" | "line-label";
 
 interface Entry {
   id: string;
@@ -43,10 +43,9 @@ function labelClasses(style: LabelStyle, color: string) {
     : `font-hand text-2xl leading-6 font-semibold ${inkColor(color).dark} [text-shadow:0_0_2px_white,0_0_4px_white,0_0_8px_white]`;
 }
 
-/** Where a label sits: centred below markers and pins, on the midpoint for lines. */
+/** Where a label sits: centred below markers, on the midpoint for lines. */
 const LABEL_POSITION: Record<EntryKind, string> = {
   marker: "absolute left-1/2 top-full mt-0.5 -translate-x-1/2",
-  pin: "absolute left-1/2 top-full mt-2 -translate-x-1/2",
   note: "",
   "line-label": "",
 };
@@ -84,14 +83,14 @@ const supportsPlaintextOnly = (() => {
   return probe.contentEditable === "plaintext-only";
 })();
 
-/** Draws markers, post-its, board pins and all labels as MapLibre DOM Markers. */
+/** Draws markers, post-its and all labels as MapLibre DOM Markers. */
 export class PointsRenderer {
   private entries = new Map<string, Entry>();
   private interactive = false;
   /** Post-it or label being edited; its body isn't rebuilt meanwhile. */
   private editing: string | null = null;
   /** Label being edited, with the style it's drawn in until saved. */
-  private labelEdit: { id: string; style: LabelStyle } | null = null;
+  private labelEdit: { id: string; style: LabelStyle; placeholder: string } | null = null;
   private selected: string | null = null;
   private snapTarget: string | null = null;
   private erasing = new Set<string>();
@@ -142,12 +141,13 @@ export class PointsRenderer {
     }
   }
 
-  /** Rebuilds pins, e.g. after a linked board was renamed. */
-  refreshPins() {
+  /** Rebuilds markers linked to a board, e.g. after it was renamed. */
+  refreshLinks() {
     for (const entry of this.entries.values()) {
-      if (entry.kind !== "pin") continue;
       const element = this.scene.elements.get(entry.id);
-      if (element) this.renderBody(entry, element);
+      if (element?.kind === "marker" && element.boardId && this.editing !== entry.id) {
+        this.renderBody(entry, element);
+      }
     }
   }
 
@@ -194,7 +194,7 @@ export class PointsRenderer {
     this.erasing = new Set(ids);
   }
 
-  /** Topmost marker, post-it or pin under a client point, within `margin` px. */
+  /** Topmost marker or post-it under a client point, within `margin` px. */
   hitTest(clientX: number, clientY: number, margin: number): string | null {
     let best: Entry | null = null;
     for (const entry of this.entries.values()) {
@@ -220,11 +220,14 @@ export class PointsRenderer {
     });
   }
 
-  /** Starts editing a marker's or line's label in place, creating it if needed. */
-  editLabel(id: string, style: LabelStyle) {
+  /**
+   * Starts editing a marker's or line's label in place, creating it if needed.
+   * Empty text shows `placeholder`; a linked marker's label starts empty.
+   */
+  editLabel(id: string, style: LabelStyle, placeholder = "Label…") {
     const element = this.scene.elements.get(id);
     if (!element || this.editing || (element.kind !== "marker" && !isLine(element))) return;
-    this.labelEdit = { id, style };
+    this.labelEdit = { id, style, placeholder };
     const entry = this.rebuild(id);
     const node = entry?.body.querySelector<HTMLElement>("[data-label-text]");
     if (!entry || !node) {
@@ -233,7 +236,7 @@ export class PointsRenderer {
     }
     this.editInPlace(entry, node, true, () => {
       const text = node.innerText.replace(/\s+/g, " ").trim();
-      const draft = this.labelEdit ?? { id, style };
+      const draft = this.labelEdit ?? { style };
       this.labelEdit = null;
       this.callbacks.labelText(id, text, draft.style);
       // Redraw even if nothing changed, e.g. an empty new label.
@@ -426,7 +429,13 @@ export class PointsRenderer {
             </svg>`,
           ),
         );
-        if (label && (label.text || draft)) body.append(this.label(label, "marker", color));
+        if (draft) {
+          body.append(this.label(label!, "marker", color, draft.placeholder));
+        } else if (element.boardId) {
+          body.append(this.boardLabel(element.boardId));
+        } else if (label?.text) {
+          body.append(this.label(label, "marker", color));
+        }
         return body;
       }
       case "note": {
@@ -445,39 +454,32 @@ export class PointsRenderer {
         body.append(text);
         return body;
       }
-      case "pin": {
-        const ink = inkColor(element.color);
-        const body = el(
-          `relative flex items-center gap-2 rounded-2xl bg-white py-1.5 pr-3 pl-1.5 shadow-lg shadow-stone-900/20 ring-2 ring-current cursor-pointer ${ink.text}`,
-        );
-        const badge = el("grid size-7 shrink-0 place-items-center rounded-full bg-current");
-        badge.append(
-          svg(
-            `<svg viewBox="0 0 24 24" width="16" height="16" class="text-white"><circle cx="12" cy="8.5" r="5.5" fill="currentColor"/><path d="M12 14v7.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`,
-          ),
-        );
-        const name = el("max-w-44 truncate font-hand text-[22px] leading-6 font-semibold text-stone-800");
-        name.textContent = this.callbacks.boardName(element.boardId) ?? "Linked board";
-        const open = svg(
-          `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-stone-400"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>`,
-        );
-        body.append(badge, name, open);
-        if (label?.text) body.append(this.label(label, "pin", color));
-        return body;
-      }
       default: {
         const body = el("relative rounded-lg");
-        if (label) body.append(this.label(label, "line-label", color));
+        if (label) body.append(this.label(label, "line-label", color, draft?.placeholder));
         return body;
       }
     }
   }
 
-  private label(label: Label, kind: EntryKind, color: string): HTMLElement {
+  private label(label: Label, kind: EntryKind, color: string, placeholder = "Label…"): HTMLElement {
     const node = el(this.labelClass(kind, label.style, color));
     node.dataset.labelText = "";
-    node.dataset.placeholder = "Label…";
+    node.dataset.placeholder = placeholder;
     node.textContent = label.text;
+    return node;
+  }
+
+  /** A linked marker's label: the board's name in a box, with an "opens elsewhere" mark. */
+  private boardLabel(boardId: string): HTMLElement {
+    const node = el(`${LABEL_BASE} ${LABEL_POSITION.marker} ${labelClasses("box", "ink")}`);
+    node.dataset.boardLink = "";
+    node.textContent = this.callbacks.boardName(boardId) ?? "Linked board";
+    node.append(
+      svg(
+        `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="ml-1 inline-block align-[-1px] text-stone-500"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>`,
+      ),
+    );
     return node;
   }
 

@@ -1,4 +1,14 @@
-import { ArrowSquareOut, Check, PencilSimpleLine, Tag, Trash } from "@phosphor-icons/react";
+import {
+  ArrowSquareOut,
+  Check,
+  LinkSimple,
+  LinkSimpleBreak,
+  PencilSimpleLine,
+  Plus,
+  StackPlus,
+  Tag,
+  Trash,
+} from "@phosphor-icons/react";
 import { useStore } from "@nanostores/react";
 import {
   $boards,
@@ -15,7 +25,7 @@ import type { MouseEvent, ReactNode } from "react";
 import { cx } from "../lib/cx.ts";
 import { useEngine } from "../lib/engine.ts";
 import { boardUrl } from "../lib/router.ts";
-import { Divider, IconButton, Panel, PopoverButton, Swatch, SwatchDot } from "./ui.tsx";
+import { Divider, IconButton, Panel, PopoverButton, Swatch, SwatchDot, TextButton } from "./ui.tsx";
 
 /** Second toolbar: settings for the active tool, or for the selected element. */
 export function ToolOptions() {
@@ -24,7 +34,11 @@ export function ToolOptions() {
   const selected = useStore(engine.state.$selected);
   const labelDraft = useStore(engine.state.$labelDraft);
   if (labelDraft && selected?.id === labelDraft.id) {
-    return <LabelStyleBar style={labelDraft.style} color={selected.color} />;
+    return labelDraft.purpose === "board" ? (
+      <BoardNameBar />
+    ) : (
+      <LabelStyleBar style={labelDraft.style} color={selected.color} />
+    );
   }
   if (tool === "select") return selected ? <SelectionOptions key={selected.id} element={selected} /> : null;
   if (tool === "eraser") return null;
@@ -58,12 +72,6 @@ function ToolSettings({ tool }: { tool: Exclude<ToolId, "select" | "eraser"> }) 
         <>
           <Divider />
           <WidthRow value={prefs.width} onChange={(width) => engine.setPrefs({ width })} />
-        </>
-      )}
-      {tool === "pin" && (
-        <>
-          <Divider />
-          <PinTarget />
         </>
       )}
     </OptionsPanel>
@@ -110,19 +118,8 @@ function SelectionOptions({ element }: { element: BoardElement }) {
           <PencilSimpleLine size={22} weight="duotone" />
         </IconButton>
       )}
-      {element.kind === "pin" && (
-        <>
-          <PinRetarget boardId={element.boardId} />
-          <IconButton
-            compact
-            label="Open linked board in a new tab"
-            onClick={() => window.open(boardUrl(element.boardId), "_blank", "noopener")}
-          >
-            <ArrowSquareOut size={22} weight="duotone" />
-          </IconButton>
-        </>
-      )}
-      {(isLine || element.kind === "marker") && (
+      {element.kind === "marker" && element.boardId && <BoardLinkActions boardId={element.boardId} />}
+      {(isLine || (element.kind === "marker" && !element.boardId)) && (
         <IconButton
           compact
           label={element.label ? "Edit label" : "Add label"}
@@ -131,6 +128,16 @@ function SelectionOptions({ element }: { element: BoardElement }) {
           <Tag size={22} weight="duotone" className="text-orange-500" />
         </IconButton>
       )}
+      {element.kind === "marker" && !element.boardId && (
+        <TextButton
+          label="Plan this place on a board of its own"
+          onClick={() => engine.linkSelectedToNewBoard()}
+        >
+          <StackPlus size={20} weight="duotone" className="text-violet-600" />
+          Own board
+        </TextButton>
+      )}
+      <Divider />
       <IconButton
         compact
         label="Delete"
@@ -287,65 +294,98 @@ function WidthRow({ value, onChange }: { value: Width; onChange: (width: Width) 
   );
 }
 
-const selectClass =
-  "h-10 max-w-44 min-w-0 cursor-pointer rounded-xl bg-white/70 px-2 text-sm font-medium text-stone-700 ring-1 ring-orange-950/10 outline-none focus:ring-2 focus:ring-violet-400";
-
-/** Which board a new pin links to. */
-function PinTarget() {
+/** A linked marker: open its board, or change or remove the link. */
+function BoardLinkActions({ boardId }: { boardId: string }) {
   const engine = useEngine();
   const boards = useStore($boards);
   const current = useStore(engine.state.$boardId);
-  const target = useStore(engine.state.$pinTarget);
-  const name = useStore(engine.state.$pinName);
   const others = boards.filter((b) => b.id !== current);
-  const value = others.some((b) => b.id === target) ? target : "new";
+  const item =
+    "flex w-full cursor-pointer items-center gap-2.5 rounded-xl px-2 py-1.5 text-left text-sm font-medium transition hover:bg-orange-100/70";
   return (
     <>
-      <select
-        aria-label="Pin links to"
-        value={value}
-        onChange={(event) => engine.setPinTarget(event.target.value)}
-        className={selectClass}
+      <TextButton
+        label="Open the linked board in a new tab"
+        onClick={() => window.open(boardUrl(boardId), "_blank", "noopener")}
       >
-        <option value="new">New board</option>
-        {others.map((b) => (
-          <option key={b.id} value={b.id}>
-            {b.name}
-          </option>
-        ))}
-      </select>
-      {value === "new" && (
-        <input
-          value={name}
-          placeholder="Name, e.g. Lisbon"
-          aria-label="Name of the new board"
-          onChange={(event) => engine.setPinTarget("new", event.target.value)}
-          className="ml-1 h-10 w-40 min-w-0 rounded-xl bg-white/70 px-2 font-hand text-xl font-semibold text-stone-800 ring-1 ring-orange-950/10 outline-none placeholder:font-sans placeholder:text-sm placeholder:font-normal placeholder:text-stone-400 focus:ring-2 focus:ring-violet-400"
-        />
-      )}
+        <ArrowSquareOut size={20} weight="duotone" className="text-violet-600" />
+        Open
+      </TextButton>
+      <PopoverButton menu label="Linked board" trigger={<LinkSimple size={22} weight="duotone" />}>
+        {(close) => (
+          <>
+            <p className="px-2 pt-1 pb-1.5 text-[11px] font-semibold tracking-wide text-stone-500 uppercase">
+              Links to
+            </p>
+            <div className="max-h-56 overflow-y-auto">
+              {others.map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={b.id === boardId}
+                  onClick={() => {
+                    engine.linkSelected(b.id);
+                    close();
+                  }}
+                  className={cx(item, b.id === boardId && "bg-orange-100")}
+                >
+                  <span className="flex-1 truncate">{b.name}</span>
+                  {b.id === boardId && <Check size={16} weight="bold" className="text-orange-600" />}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                close();
+                engine.linkSelectedToNewBoard();
+              }}
+              className={item}
+            >
+              <Plus size={16} weight="bold" className="text-violet-600" />
+              New board…
+            </button>
+            <div className="mx-2 my-1 h-px bg-orange-950/10" />
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                close();
+                engine.unlinkSelected();
+              }}
+              className={item}
+            >
+              <LinkSimpleBreak size={16} weight="bold" className="text-stone-500" />
+              Unlink
+            </button>
+          </>
+        )}
+      </PopoverButton>
     </>
   );
 }
 
-/** Changes which board a selected pin links to. */
-function PinRetarget({ boardId }: { boardId: string }) {
+/** While naming a new board on the map. */
+function BoardNameBar() {
   const engine = useEngine();
-  const boards = useStore($boards);
-  const current = useStore(engine.state.$boardId);
-  const options = boards.filter((b) => b.id !== current);
   return (
-    <select
-      aria-label="Pin links to"
-      value={boardId}
-      onChange={(event) => engine.updateSelected({ boardId: event.target.value })}
-      className={cx(selectClass, "mr-1")}
-    >
-      {!options.some((b) => b.id === boardId) && <option value={boardId}>Linked board</option>}
-      {options.map((b) => (
-        <option key={b.id} value={b.id}>
-          {b.name}
-        </option>
-      ))}
-    </select>
+    <OptionsPanel>
+      <span className="flex items-center gap-1.5 px-2 text-sm font-semibold text-stone-600">
+        <StackPlus size={20} weight="duotone" className="text-violet-600" />
+        New board
+      </span>
+      <Divider />
+      <IconButton
+        compact
+        label="Done"
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => engine.finishEditing()}
+        className="text-teal-600 hover:bg-teal-50"
+      >
+        <Check size={22} weight="bold" />
+      </IconButton>
+    </OptionsPanel>
   );
 }

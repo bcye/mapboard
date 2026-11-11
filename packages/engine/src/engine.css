@@ -22,8 +22,7 @@
 .em-root[data-tool="draw"] .maplibregl-canvas-container,
 .em-root[data-tool="arrow"] .maplibregl-canvas-container,
 .em-root[data-tool="marker"] .maplibregl-canvas-container,
-.em-root[data-tool="note"] .maplibregl-canvas-container,
-.em-root[data-tool="pin"] .maplibregl-canvas-container {
+.em-root[data-tool="note"] .maplibregl-canvas-container {
   cursor: crosshair;
 }
 

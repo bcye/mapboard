@@ -5,7 +5,7 @@ import { inkColor, STROKE_SIZE } from "../palette.ts";
 import type { InkPoint, LineElement } from "../types.ts";
 import type { ScreenPoint, Tool, ToolContext } from "./context.ts";
 
-/** How close (px) a line's end must be to a marker, post-it or pin to snap. */
+/** How close (px) a line's end must be to a marker or post-it to snap. */
 const SNAP_MARGIN = { stroke: 6, arrow: 18 };
 
 /**

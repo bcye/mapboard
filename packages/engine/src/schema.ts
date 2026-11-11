@@ -53,14 +53,17 @@ export function parseElement(input: unknown): BoardElement | null {
       return value as unknown as BoardElement;
     }
     case "marker":
+      if (value.boardId !== undefined && !isStr(value.boardId)) return null;
       return isLngLat(value.at) && isStr(value.color) ? (value as unknown as BoardElement) : null;
     case "note":
       return isLngLat(value.at) && isStr(value.text) && isStr(value.color)
         ? (value as unknown as BoardElement)
         : null;
     case "pin":
-      return isLngLat(value.at) && isStr(value.boardId) && isStr(value.color)
-        ? (value as unknown as BoardElement)
+      // Board pins from older versions are markers linked to a board.
+      if (value.boardId !== undefined && !isStr(value.boardId)) return null;
+      return isLngLat(value.at) && isStr(value.color)
+        ? ({ ...value, kind: "marker" } as unknown as BoardElement)
         : null;
     default:
       return null;

@@ -1,6 +1,6 @@
-import { AirplaneTilt, WarningCircle } from "@phosphor-icons/react";
+import { AirplaneTilt, StackPlus, WarningCircle } from "@phosphor-icons/react";
 import { useStore } from "@nanostores/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { cx } from "../lib/cx.ts";
 import { useEngine } from "../lib/engine.ts";
 import { $toasts, toast } from "../lib/toast.ts";
@@ -20,9 +20,84 @@ export function EmptyHint() {
         <p className="text-sm leading-snug text-stone-600">
           <span className="font-hand text-2xl leading-7 font-semibold text-stone-800">Where to?</span>
           <br />
-          Drop a marker, sketch a route or stick a post-it. Board pins link to other boards, like one per
+          Drop a marker, sketch a route or stick a post-it. A marker can get a board of its own, like one per
           city.
         </p>
+      </div>
+    </div>
+  );
+}
+
+const BOARD_LINK_HINT_KEY = "map-board:hint:board-link";
+
+function hintSeen(key: string) {
+  try {
+    return localStorage.getItem(key) !== null;
+  } catch {
+    return false;
+  }
+}
+
+function markHintSeen(key: string) {
+  try {
+    localStorage.setItem(key, String(Date.now()));
+  } catch {
+    // Shown again next time; harmless.
+  }
+}
+
+/** Shown once, the first time a marker is placed: markers can link to a board. */
+export function BoardLinkHint() {
+  const engine = useEngine();
+  const [shownFor, setShownFor] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(
+    () =>
+      engine.state.$placed.listen((placed) => {
+        if (placed?.kind !== "marker" || hintSeen(BOARD_LINK_HINT_KEY)) return;
+        markHintSeen(BOARD_LINK_HINT_KEY);
+        setShownFor(placed.id);
+      }),
+    [engine],
+  );
+  // Once someone links a marker, they've found it.
+  useEffect(() => {
+    const stops = [
+      engine.state.$labelDraft.listen((draft) => draft?.purpose === "board" && setDismissed(true)),
+      engine.state.$selected.listen((el) => el?.kind === "marker" && el.boardId && setDismissed(true)),
+    ];
+    return () => stops.forEach((stop) => stop());
+  }, [engine]);
+  useEffect(() => {
+    if (!shownFor) return;
+    const timer = setTimeout(() => setDismissed(true), 20_000);
+    return () => clearTimeout(timer);
+  }, [shownFor]);
+
+  if (!shownFor || dismissed) return null;
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-36 z-20 flex justify-center px-4 md:top-36 md:bottom-auto">
+      <div
+        role="status"
+        className="pointer-events-auto flex max-w-sm items-center gap-3 rounded-2xl bg-amber-50/95 py-3 pr-2 pl-4 shadow-lg ring-1 shadow-orange-950/10 ring-orange-950/10 backdrop-blur-md"
+      >
+        <span className="grid size-10 shrink-0 rotate-3 place-items-center rounded-xl bg-violet-500 text-white shadow-sm shadow-violet-600/30">
+          <StackPlus size={22} weight="fill" />
+        </span>
+        <p className="text-sm leading-snug text-stone-600">
+          <span className="font-hand text-xl leading-6 font-semibold text-stone-800">Planning a city?</span>
+          <br />
+          Select a marker and tap <span className="font-semibold text-stone-800">Own board</span> to plan it
+          on a board of its own.
+        </p>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          className="shrink-0 cursor-pointer self-stretch rounded-xl px-2.5 text-sm font-semibold text-violet-700 hover:bg-violet-50"
+        >
+          Got it
+        </button>
       </div>
     </div>
   );
