@@ -1,68 +1,107 @@
-import { getStroke, type StrokeOptions } from "perfect-freehand";
 import { add, dist, len, normalize, pointAlong, polylineLength, scale, sub, type XY } from "./geo.ts";
 
 /** A point with optional pen pressure, in px space. */
 export type InkXY = [x: number, y: number, pressure?: number];
 
-const strokeOptions = (size: number, pen: boolean): StrokeOptions => ({
-  size,
-  thinning: 0.55,
-  smoothing: 0.5,
-  streamline: 0.35,
-  simulatePressure: !pen,
-  last: true,
-});
+/** How far each point is pulled toward the next input point (1 = no smoothing). */
+const STREAMLINE = 0.7;
 
-/** The two strokes of an arrowhead: even width, no pressure. */
-const headOptions = (size: number): StrokeOptions => ({
-  size,
-  thinning: 0.1,
-  smoothing: 0.6,
-  streamline: 0.2,
-  simulatePressure: false,
-  last: true,
-});
-
-/** Closed outline ring for a freehand stroke. Works in any px space. */
-export function strokeOutline(points: InkXY[], size: number): XY[] {
-  const pen = points.some((p) => p[2] !== undefined);
-  const input = points.map((p) => [p[0], p[1], p[2] ?? 0.5]);
-  return closeRing(getStroke(input, strokeOptions(size, pen)));
+/**
+ * Smooths a drawn line for display: each point eases toward the input, then
+ * corners are rounded (one Chaikin pass). Both ends stay where they were.
+ */
+export function smoothLine(points: readonly XY[]): XY[] {
+  if (points.length < 3) return points.slice();
+  const eased: XY[] = [points[0]!];
+  for (let i = 1; i < points.length; i++) {
+    const prev = eased[eased.length - 1]!;
+    const next = points[i]!;
+    const point: XY =
+      i === points.length - 1
+        ? next
+        : [prev[0] + (next[0] - prev[0]) * STREAMLINE, prev[1] + (next[1] - prev[1]) * STREAMLINE];
+    if (point[0] !== prev[0] || point[1] !== prev[1]) eased.push(point);
+  }
+  if (eased.length < 3) return eased;
+  const out: XY[] = [eased[0]!];
+  for (let i = 1; i < eased.length; i++) {
+    const a = eased[i - 1]!;
+    const b = eased[i]!;
+    if (i > 1) out.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25]);
+    if (i < eased.length - 1) out.push([a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
+  }
+  out.push(eased[eased.length - 1]!);
+  return out;
 }
 
-/** Outline rings for an arrow: the same freehand stroke as a line, plus a head at its end. */
-export function arrowOutlines(points: InkXY[], size: number): XY[][] {
-  const shaft = strokeOutline(points, size);
-  const path = points.map((p): XY => [p[0], p[1]]);
-  const total = polylineLength(path);
-  if (total === 0) return [shaft];
-  const tip = path[path.length - 1]!;
-  const headLength = Math.min(Math.max(size * 2.6, 14), total * 0.45);
-  // Aim the head along the last stretch of the line, not its final wobble.
-  const back = pointAlong(path, Math.max(0, total - headLength * 0.75));
+/** Half the angle between an arrowhead's two strokes, in radians. */
+export const HEAD_ANGLE = 0.5;
+
+/** Length of an arrowhead's strokes for a line `width` px wide. */
+export const headLength = (width: number) => width * 2.2 + 8;
+
+/** Where an arrowhead sits and which way it points (a unit vector). */
+export interface HeadPlacement {
+  at: XY;
+  direction: XY;
+}
+
+/** Where a line's end sits inside: a box around a post-it, or a small one around a marker's tip. */
+export interface SnapShape {
+  center: XY;
+  halfWidth: number;
+  halfHeight: number;
+}
+
+const inside = (p: XY, box: SnapShape) =>
+  Math.abs(p[0] - box.center[0]) < box.halfWidth && Math.abs(p[1] - box.center[1]) < box.halfHeight;
+
+/**
+ * The head of an arrow drawn along `path`, with strokes `length` long. With a
+ * `box`, the head sits where the line enters it, so it isn't hidden under the
+ * element the line is snapped to. Null if there's nowhere to put it.
+ */
+export function placeHead(path: readonly XY[], length: number, box?: SnapShape): HeadPlacement | null {
+  let line = path;
+  if (box) {
+    let last = path.length - 1;
+    while (last >= 0 && inside(path[last]!, box)) last--;
+    if (last < 0) return null;
+    line = path.slice(0, last + 1);
+    const outer = path[last]!;
+    const inner = path[last + 1];
+    if (inner) {
+      // Binary search along the segment for the box edge.
+      let lo = 0;
+      let hi = 1;
+      for (let i = 0; i < 24; i++) {
+        const mid = (lo + hi) / 2;
+        const p: XY = [outer[0] + (inner[0] - outer[0]) * mid, outer[1] + (inner[1] - outer[1]) * mid];
+        if (inside(p, box)) hi = mid;
+        else lo = mid;
+      }
+      line = [...line, [outer[0] + (inner[0] - outer[0]) * lo, outer[1] + (inner[1] - outer[1]) * lo]];
+    }
+  }
+  const tip = line[line.length - 1];
+  if (!tip) return null;
+  // Aim along the last stretch of the line, not its final wobble.
+  const total = polylineLength(line as XY[]);
+  const back = pointAlong(line as XY[], Math.max(0, total - length * 0.75));
   const direction = normalize(sub(tip, back));
-  if (direction[0] === 0 && direction[1] === 0) return [shaft];
+  if (direction[0] === 0 && direction[1] === 0) return null;
+  return { at: tip, direction };
+}
+
+/** End points of an arrowhead's two strokes, which meet at `head.at`. */
+export function headWings(head: HeadPlacement, length: number): [XY, XY] {
   const wing = (angle: number): XY => {
     const cos = Math.cos(angle);
     const sin = Math.sin(angle);
-    const d: XY = [-direction[0], -direction[1]];
-    return add(tip, scale([d[0] * cos - d[1] * sin, d[0] * sin + d[1] * cos], headLength));
+    const [dx, dy] = [-head.direction[0], -head.direction[1]];
+    return add(head.at, scale([dx * cos - dy * sin, dx * sin + dy * cos], length));
   };
-  const head = [wing(0.5), wing(-0.5)].map((end) =>
-    closeRing(
-      getStroke(
-        [end, tip].map((p) => [p[0], p[1], 0.5]),
-        headOptions(size * 0.8),
-      ),
-    ),
-  );
-  return [shaft, ...head];
-}
-
-function closeRing(points: number[][]): XY[] {
-  const ring = points.map((p) => [p[0]!, p[1]!] as XY);
-  if (ring.length > 0) ring.push([ring[0]![0], ring[0]![1]]);
-  return ring;
+  return [wing(HEAD_ANGLE), wing(-HEAD_ANGLE)];
 }
 
 const smoothstep = (x: number) => x * x * (3 - 2 * x);
@@ -87,33 +126,4 @@ export function bendEnd(points: XY[], target: XY, end: "start" | "end"): XY[] {
     out.push(add(pts[i]!, scale(delta, weight)));
   }
   return end === "start" ? out : out.reverse();
-}
-
-/** Where a line should stop when it ends at a shape centred on `center`. */
-export interface SnapShape {
-  center: XY;
-  /** Half width and height of the shape's box. 0 for a point. */
-  halfWidth: number;
-  halfHeight: number;
-}
-
-/**
- * The point where a line approaching from `from` should end, just outside the
- * shape's box, so an arrowhead isn't hidden under the element.
- */
-export function snapPoint(shape: SnapShape, from: XY, margin: number): XY {
-  const direction = normalize(sub(shape.center, from));
-  const [dx, dy] = direction;
-  if (dx === 0 && dy === 0) return shape.center;
-  const tx = dx === 0 ? Infinity : shape.halfWidth / Math.abs(dx);
-  const ty = dy === 0 ? Infinity : shape.halfHeight / Math.abs(dy);
-  const inset = Math.min(tx, ty) + margin;
-  return sub(shape.center, scale(direction, inset));
-}
-
-/** The point on the line used to judge where it approaches its end from. */
-export function approachPoint(points: XY[], end: "start" | "end"): XY {
-  const pts = end === "start" ? points : points.slice().reverse();
-  const total = polylineLength(pts);
-  return pointAlong(pts, Math.min(total * 0.25, total));
 }

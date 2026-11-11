@@ -180,6 +180,15 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
       board?.update(id, { at: [roundCoord(at[0]), roundCoord(at[1])] });
       preview(scene.linesAttachedTo(id));
     },
+    resize(id, at) {
+      scene.overrides.set(id, { at });
+      preview(scene.linesAttachedTo(id));
+    },
+    resizeEnd(id, at, size) {
+      scene.overrides.delete(id);
+      board?.update(id, { at: [roundCoord(at[0]), roundCoord(at[1])], size });
+      preview(scene.linesAttachedTo(id));
+    },
     noteText: (id, text) => board?.update(id, { text }),
     labelText(id, text, style) {
       const draft = state.$labelDraft.get();
@@ -328,7 +337,11 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
     lines.install();
     state.$mapError.set(null);
   });
-  map.on("zoom", () => points.rescale(map.getZoom()));
+  map.on("zoom", () => {
+    const zoom = map.getZoom();
+    points.rescale(zoom);
+    lines.rescale(zoom);
+  });
   map.on("moveend", () => {
     if (!board) return;
     const { lng, lat } = map.getCenter();

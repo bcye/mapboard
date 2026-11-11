@@ -122,5 +122,5 @@ export function paperColor(key: string | undefined): PaletteColor {
   return PAPER.find((c) => c.key === key) ?? PAPER[0]!;
 }
 
-/** Stroke widths in px at the element's reference zoom. */
-export const STROKE_SIZE = { s: 4, m: 7, l: 12 } as const;
+/** Line widths in px at the element's reference zoom. */
+export const STROKE_SIZE = { s: 3, m: 5, l: 9 } as const;

@@ -1,6 +1,24 @@
-import { add, fromMerc, pointAlong, polylineLength, toMerc, worldSize, type XY } from "./geo.ts";
-import { approachPoint, bendEnd, snapPoint, type SnapShape } from "./ink.ts";
-import { isLine, isPoint, type BoardElement, type LineElement, type LngLat } from "./types.ts";
+import {
+  add,
+  fromMerc,
+  pointAlong,
+  polylineLength,
+  SCALE_RANGE,
+  toMerc,
+  worldSize,
+  zoomScale,
+  type ScaleRange,
+  type XY,
+} from "./geo.ts";
+import { bendEnd, type SnapShape } from "./ink.ts";
+import {
+  isLine,
+  isPoint,
+  type BoardElement,
+  type ElementKind,
+  type LineElement,
+  type LngLat,
+} from "./types.ts";
 
 /** Unscaled DOM size of a point element, in px at its reference zoom. */
 export type SizeOf = (id: string) => { width: number; height: number } | null;
@@ -8,7 +26,15 @@ export type SizeOf = (id: string) => { width: number; height: number } | null;
 /** Temporary positions while something is being dragged. Not saved. */
 export type Override = { at: LngLat } | { offset: XY };
 
-const FALLBACK_SIZE = { note: { width: 144, height: 110 } };
+const FALLBACK_SIZE = { note: { width: 144, height: 72 } };
+
+/** How far elements of this kind grow and shrink with zoom. */
+export const scaleRangeFor = (kind: ElementKind | "line-label"): ScaleRange =>
+  kind === "note"
+    ? SCALE_RANGE.note
+    : kind === "stroke" || kind === "arrow"
+      ? SCALE_RANGE.line
+      : SCALE_RANGE.point;
 
 /**
  * The board as currently drawn: elements, stacking order, which lines are
@@ -69,18 +95,23 @@ export class Scene {
     return element && isPoint(element) ? element.at : null;
   }
 
-  /** The line in Mercator space, with drag offsets and snapped ends applied. */
+  /**
+   * The line in Mercator space, with drag offsets and snapped ends applied.
+   * Snapped ends go to the point's position (a post-it's centre, a
+   * marker's tip), so the path doesn't depend on zoom. The element covers the
+   * rest of the line.
+   */
   linePath(line: LineElement): XY[] {
     const override = this.overrides.get(line.id);
     const offset = override && "offset" in override ? override.offset : null;
     let path = line.points.map((p) => (offset ? add(toMerc(p), offset) : toMerc(p)));
     if (line.from && line.from !== line.to) {
-      const target = this.snapTarget(line.from, approachPoint(path, "start"));
-      if (target) path = bendEnd(path, target, "start");
+      const target = this.positionOf(line.from);
+      if (target) path = bendEnd(path, toMerc(target), "start");
     }
     if (line.to) {
-      const target = this.snapTarget(line.to, approachPoint(path, "end"));
-      if (target) path = bendEnd(path, target, "end");
+      const target = this.positionOf(line.to);
+      if (target) path = bendEnd(path, toMerc(target), "end");
     }
     return path;
   }
@@ -91,23 +122,24 @@ export class Scene {
     return fromMerc(pointAlong(path, polylineLength(path) / 2));
   }
 
-  private snapTarget(pointId: string, approach: XY): XY | null {
+  /**
+   * The box a point element covers on screen at `zoom`, plus `gap` px around
+   * it, in Mercator units. For a marker, just the gap around its tip.
+   */
+  snapBox(pointId: string, zoom: number, gap: number): SnapShape | null {
     const element = this.elements.get(pointId);
     const at = this.positionOf(pointId);
     if (!element || !at || !isPoint(element)) return null;
-    const unit = 1 / worldSize(element.refZoom);
+    const unit = 1 / worldSize(zoom);
     const center = toMerc(at);
-    if (element.kind === "marker") {
-      // Markers are anchored at their tip: end just short of it.
-      return snapPoint({ center, halfWidth: 0, halfHeight: 0 }, approach, 3 * unit);
-    }
+    if (element.kind === "marker") return { center, halfWidth: gap * unit, halfHeight: gap * unit };
     const size = this.sizeOf(pointId) ?? FALLBACK_SIZE[element.kind];
-    const shape: SnapShape = {
+    const scale = zoomScale(zoom, scaleRangeFor(element.kind));
+    return {
       center,
-      halfWidth: (size.width / 2) * unit,
-      halfHeight: (size.height / 2) * unit,
+      halfWidth: ((size.width / 2) * scale + gap) * unit,
+      halfHeight: ((size.height / 2) * scale + gap) * unit,
     };
-    return snapPoint(shape, approach, 6 * unit);
   }
 
   private attach(line: LineElement) {

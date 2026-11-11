@@ -6,7 +6,8 @@ Framework-free board engine. A UI mounts it on an empty element with `createEngi
 | ----------------------- | ---------------------------------------------------------------------------------- |
 | `board.ts`              | Yjs doc per board: elements, undo, IndexedDB, cross-tab sync. The only Yjs import. |
 | `scene.ts`              | Elements as drawn: stacking, snapped lines, drag previews                          |
-| `render/lines.ts`       | Strokes and arrows as filled polygons in a MapLibre GeoJSON source                 |
+| `render/lines.ts`       | Strokes and arrows as lines in a MapLibre GeoJSON source                           |
+| `render/heads.ts`       | Arrowheads as MapLibre DOM Markers                                                 |
 | `render/points.ts`      | Markers, post-its, board pins and labels as MapLibre DOM Markers                   |
 | `render/draft.ts`       | Canvas for the stroke being drawn                                                  |
 | `tools/*`               | Pointer and map events → one board write per finished gesture                      |

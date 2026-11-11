@@ -11,6 +11,7 @@
 - MapLibre. No Mapbox lock-in, plenty of good other tile providers.
 - Probably no raster tiles down the road
 - Drawing: everything MapLibre (markers and layers), unless it really doesn't work for what we're trying to do
+- Lines: MapLibre line layer, even width
 - Vite, with Vite+ as the toolchain
 - Tailwind
 - Engine/non-framework code lives separately, so frameworks can be trialed

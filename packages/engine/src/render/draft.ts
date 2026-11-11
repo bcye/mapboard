@@ -1,10 +1,11 @@
 import type { Map as MapLibreMap } from "maplibre-gl";
 import type { XY } from "../geo.ts";
-import { arrowOutlines, strokeOutline, type InkXY } from "../ink.ts";
+import { headLength, headWings, placeHead, smoothLine } from "../ink.ts";
 
 /**
  * A canvas over the map for the stroke or arrow being drawn, so inking has no
- * delay. The map doesn't move while drawing, so screen space is enough.
+ * delay. The map doesn't move while drawing, so screen space is enough. It
+ * draws the same way the finished line is drawn.
  */
 export class DraftLayer {
   private canvas = document.createElement("canvas");
@@ -20,12 +21,31 @@ export class DraftLayer {
     this.resize();
   }
 
-  drawStroke(points: InkXY[], size: number, color: string) {
-    this.fill([strokeOutline(points, size)], color);
-  }
-
-  drawArrow(points: InkXY[], size: number, color: string) {
-    this.fill(arrowOutlines(points, size), color);
+  /** `width` is the base width, drawn at `scale` like finished lines. */
+  draw(points: readonly XY[], width: number, scale: number, color: string, arrow: boolean) {
+    const ctx = this.context;
+    this.clear();
+    const path = smoothLine(points);
+    if (path.length === 0) return;
+    const length = headLength(width) * scale;
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = width * scale;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    path.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
+    if (path.length === 1) ctx.lineTo(path[0]![0], path[0]![1]);
+    ctx.stroke();
+    const head = arrow ? placeHead(path, length) : null;
+    if (head) {
+      const [a, b] = headWings(head, length);
+      ctx.beginPath();
+      ctx.moveTo(a[0], a[1]);
+      ctx.lineTo(head.at[0], head.at[1]);
+      ctx.lineTo(b[0], b[1]);
+      ctx.stroke();
+    }
   }
 
   clear() {
@@ -35,18 +55,6 @@ export class DraftLayer {
   destroy() {
     this.map.off("resize", this.resize);
     this.canvas.remove();
-  }
-
-  private fill(rings: XY[][], color: string) {
-    const ctx = this.context;
-    this.clear();
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    for (const ring of rings) {
-      ring.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
-      ctx.closePath();
-    }
-    ctx.fill("nonzero");
   }
 
   private resize = () => {

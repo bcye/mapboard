@@ -19,6 +19,8 @@ const isLngLat = (v: unknown) =>
   Math.abs(v[1]) <= 90 &&
   (v.length === 2 || isNum(v[2]));
 
+const isSize = (v: unknown) => Array.isArray(v) && v.length === 2 && v.every((n) => isNum(n) && n > 0);
+
 function parseLabel(v: unknown): Label | null {
   if (!isObj(v) || !isStr(v.text) || !isStr(v.style)) return null;
   if (LABEL_STYLES.includes(v.style as LabelStyle)) return v as unknown as Label;
@@ -56,7 +58,10 @@ export function parseElement(input: unknown): BoardElement | null {
       if (value.boardId !== undefined && !isStr(value.boardId)) return null;
       return isLngLat(value.at) && isStr(value.color) ? (value as unknown as BoardElement) : null;
     case "note":
-      return isLngLat(value.at) && isStr(value.text) && isStr(value.color)
+      return isLngLat(value.at) &&
+        isStr(value.text) &&
+        isStr(value.color) &&
+        (value.size === undefined || isSize(value.size))
         ? (value as unknown as BoardElement)
         : null;
     case "pin":

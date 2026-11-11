@@ -17,7 +17,7 @@ interface Base {
   id: string;
   /** Sortable string for stacking (fractional index). */
   order: string;
-  /** Map zoom when the element was created. Drawn size is `size × 2^(zoom − refZoom)`. */
+  /** Map zoom when the element was created. Not used for its size, see `zoomScale`. */
   refZoom: number;
   /** Shown on markers and lines. */
   label?: Label;
@@ -47,6 +47,11 @@ export interface NoteElement extends Base {
   at: LngLat;
   text: string;
   color: string;
+  /**
+   * Size set by resizing, in px at base size. The height is a minimum:
+   * the post-it still grows to fit its text. Unset means the default size.
+   */
+  size?: [width: number, height: number];
 }
 
 export type PointElement = MarkerElement | NoteElement;

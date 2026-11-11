@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
-import { dist, fromMerc, toMerc, type XY } from "../src/geo.ts";
-import { arrowOutlines, bendEnd, snapPoint, strokeOutline, type InkXY } from "../src/ink.ts";
+import { BASE_ZOOM, fromMerc, SCALE_RANGE, toMerc, worldSize, zoomScale, type XY } from "../src/geo.ts";
+import { bendEnd, placeHead, smoothLine } from "../src/ink.ts";
 import { Scene } from "../src/scene.ts";
-import type { BoardElement, LineElement, MarkerElement } from "../src/types.ts";
+import type { BoardElement, LineElement, MarkerElement, NoteElement } from "../src/types.ts";
 
 const straight = (n: number): XY[] => Array.from({ length: n + 1 }, (_, i) => [i, 0]);
 
@@ -14,22 +14,47 @@ describe("geometry", () => {
     expect(toMerc([0, 0])).toEqual([0.5, 0.5]);
   });
 
-  it("draws an arrow as the freehand line plus a head at its end", () => {
-    const line: InkXY[] = [
+  it("scales elements with the zoom only, at half the map's rate, within their range", () => {
+    expect(zoomScale(BASE_ZOOM, SCALE_RANGE.note)).toBe(1);
+    expect(zoomScale(BASE_ZOOM + 1, SCALE_RANGE.line)).toBeCloseTo(Math.SQRT2);
+    expect(zoomScale(BASE_ZOOM - 1, SCALE_RANGE.note)).toBeCloseTo(Math.SQRT1_2);
+    expect(zoomScale(16, SCALE_RANGE.note)).toBe(1.25);
+    expect(zoomScale(0, SCALE_RANGE.note)).toBe(0.4);
+  });
+
+  it("smooths a line but keeps its ends", () => {
+    const line: XY[] = [
       [0, 0],
-      [20, 10],
+      [10, 4],
+      [20, -4],
+      [30, 4],
       [40, 0],
-      [60, 10],
-      [100, 10],
     ];
-    const [shaft, ...head] = arrowOutlines(line, 7);
-    expect(shaft).toEqual(strokeOutline(line, 7));
-    expect(head).toHaveLength(2);
-    // The head points along the last stretch: its wings sit behind the tip.
-    for (const ring of head) {
-      expect(Math.min(...ring.map(([x]) => x))).toBeLessThan(95);
-      expect(Math.max(...ring.map(([x]) => x))).toBeLessThanOrEqual(105);
-    }
+    const smooth = smoothLine(line);
+    expect(smooth[0]).toEqual([0, 0]);
+    expect(smooth.at(-1)).toEqual([40, 0]);
+    expect(Math.max(...smooth.map(([, y]) => Math.abs(y)))).toBeLessThan(4);
+  });
+
+  it("puts an arrowhead at the tip, pointing along the last stretch", () => {
+    const head = placeHead(straight(100), 20)!;
+    expect(head.at).toEqual([100, 0]);
+    expect(head.direction).toEqual([1, 0]);
+  });
+
+  it("puts an arrowhead where the line enters a box", () => {
+    const box = { center: [100, 0] as XY, halfWidth: 10, halfHeight: 5 };
+    const head = placeHead(straight(100), 20, box)!;
+    expect(head.at[0]).toBeCloseTo(90, 5);
+    expect(head.at[1]).toBeCloseTo(0, 5);
+    expect(head.direction).toEqual([1, 0]);
+    expect(
+      placeHead(
+        straight(5).map(([x]) => [x + 98, 0]),
+        20,
+        box,
+      ),
+    ).toBeNull();
   });
 
   it("bends only the end of a line onto a target", () => {
@@ -43,12 +68,6 @@ describe("geometry", () => {
     const fromStart = bendEnd(line, [0, -3], "start");
     expect(fromStart[0]).toEqual([0, -3]);
     expect(fromStart.at(-1)).toEqual([10, 0]);
-  });
-
-  it("stops just outside a box", () => {
-    const end = snapPoint({ center: [0, 0], halfWidth: 4, halfHeight: 2 }, [-10, 0], 1);
-    expect(end[0]).toBeCloseTo(-5);
-    expect(end[1]).toBeCloseTo(0);
   });
 });
 
@@ -93,9 +112,27 @@ describe("scene", () => {
     const { scene } = sceneWith(marker, arrow);
     scene.overrides.set("m", { at: [10, 3] });
     const path = scene.linePath(arrow);
-    // Ends 3px (at the marker's zoom) short of the tip, so an arrowhead stays visible.
-    expect(dist(path.at(-1)!, toMerc([10, 3]))).toBeCloseTo(3 / (512 * 2 ** 4), 9);
+    expect(path.at(-1)).toEqual(toMerc([10, 3]));
     expect(path[0]).toEqual(toMerc([0, 0]));
+  });
+
+  it("sizes a post-it's snap box for the zoom, whatever zoom it was drawn at", () => {
+    const note: NoteElement = {
+      id: "n",
+      kind: "note",
+      order: "a2",
+      refZoom: 9,
+      at: [0, 0],
+      text: "",
+      color: "amber",
+    };
+    const { scene } = sceneWith(note);
+    scene.sizeOf = () => ({ width: 100, height: 60 });
+    const atBase = scene.snapBox("n", BASE_ZOOM, 0)!;
+    expect(atBase.halfWidth * worldSize(BASE_ZOOM)).toBeCloseTo(50);
+    // Two zoom levels in, the map is four times as big, the post-it only 1.25 times (its limit).
+    const zoomedIn = scene.snapBox("n", BASE_ZOOM + 2, 0)!;
+    expect(zoomedIn.halfWidth * worldSize(BASE_ZOOM + 2)).toBeCloseTo(50 * 1.25);
   });
 
   it("stacks by order", () => {
