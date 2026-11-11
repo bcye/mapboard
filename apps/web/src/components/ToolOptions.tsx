@@ -128,15 +128,7 @@ function SelectionOptions({ element }: { element: BoardElement }) {
           <Tag size={22} weight="duotone" className="text-orange-500" />
         </IconButton>
       )}
-      {element.kind === "marker" && !element.boardId && (
-        <TextButton
-          label="Plan this place on a board of its own"
-          onClick={() => engine.linkSelectedToNewBoard()}
-        >
-          <StackPlus size={20} weight="duotone" className="text-violet-600" />
-          Own board
-        </TextButton>
-      )}
+      {element.kind === "marker" && !element.boardId && <OwnBoardButton />}
       <Divider />
       <IconButton
         compact
@@ -294,14 +286,46 @@ function WidthRow({ value, onChange }: { value: Width; onChange: (width: Width) 
   );
 }
 
-/** A linked marker: open its board, or change or remove the link. */
-function BoardLinkActions({ boardId }: { boardId: string }) {
+/** Boards a marker on this board can link to. */
+function useLinkableBoards() {
   const engine = useEngine();
   const boards = useStore($boards);
   const current = useStore(engine.state.$boardId);
-  const others = boards.filter((b) => b.id !== current);
-  const item =
-    "flex w-full cursor-pointer items-center gap-2.5 rounded-xl px-2 py-1.5 text-left text-sm font-medium transition hover:bg-orange-100/70";
+  return boards.filter((b) => b.id !== current);
+}
+
+/**
+ * Gives an unlinked marker a board: pick an existing one, or make a new one.
+ * With no other boards to pick from, it makes a new one straight away.
+ */
+function OwnBoardButton() {
+  const engine = useEngine();
+  const others = useLinkableBoards();
+  const content = (
+    <>
+      <StackPlus size={20} weight="duotone" className="text-violet-600" />
+      Own board
+    </>
+  );
+  if (others.length === 0) {
+    return (
+      <TextButton
+        label="Plan this place on a board of its own"
+        onClick={() => engine.linkSelectedToNewBoard()}
+      >
+        {content}
+      </TextButton>
+    );
+  }
+  return (
+    <PopoverButton menu text label="Plan this place on a board of its own" trigger={content}>
+      {(close) => <LinkMenu close={close} />}
+    </PopoverButton>
+  );
+}
+
+/** A linked marker: open its board, or change or remove the link. */
+function BoardLinkActions({ boardId }: { boardId: string }) {
   return (
     <>
       <TextButton
@@ -312,57 +336,70 @@ function BoardLinkActions({ boardId }: { boardId: string }) {
         Open
       </TextButton>
       <PopoverButton menu label="Linked board" trigger={<LinkSimple size={22} weight="duotone" />}>
-        {(close) => (
-          <>
-            <p className="px-2 pt-1 pb-1.5 text-[11px] font-semibold tracking-wide text-stone-500 uppercase">
-              Links to
-            </p>
-            <div className="max-h-56 overflow-y-auto">
-              {others.map((b) => (
-                <button
-                  key={b.id}
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={b.id === boardId}
-                  onClick={() => {
-                    engine.linkSelected(b.id);
-                    close();
-                  }}
-                  className={cx(item, b.id === boardId && "bg-orange-100")}
-                >
-                  <span className="flex-1 truncate">{b.name}</span>
-                  {b.id === boardId && <Check size={16} weight="bold" className="text-orange-600" />}
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                close();
-                engine.linkSelectedToNewBoard();
-              }}
-              className={item}
-            >
-              <Plus size={16} weight="bold" className="text-violet-600" />
-              New board…
-            </button>
-            <div className="mx-2 my-1 h-px bg-orange-950/10" />
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                close();
-                engine.unlinkSelected();
-              }}
-              className={item}
-            >
-              <LinkSimpleBreak size={16} weight="bold" className="text-stone-500" />
-              Unlink
-            </button>
-          </>
-        )}
+        {(close) => <LinkMenu close={close} linked={boardId} />}
       </PopoverButton>
+    </>
+  );
+}
+
+/** Pick a board for the selected marker, make a new one, or unlink it if `linked`. */
+function LinkMenu({ close, linked }: { close: () => void; linked?: string }) {
+  const engine = useEngine();
+  const others = useLinkableBoards();
+  const item =
+    "flex w-full cursor-pointer items-center gap-2.5 rounded-xl px-2 py-1.5 text-left text-sm font-medium transition hover:bg-orange-100/70";
+  return (
+    <>
+      <p className="px-2 pt-1 pb-1.5 text-[11px] font-semibold tracking-wide text-stone-500 uppercase">
+        Links to
+      </p>
+      <div className="max-h-56 overflow-y-auto">
+        {others.map((b) => (
+          <button
+            key={b.id}
+            type="button"
+            role="menuitemradio"
+            aria-checked={b.id === linked}
+            onClick={() => {
+              engine.linkSelected(b.id);
+              close();
+            }}
+            className={cx(item, b.id === linked && "bg-orange-100")}
+          >
+            <span className="flex-1 truncate">{b.name}</span>
+            {b.id === linked && <Check size={16} weight="bold" className="text-orange-600" />}
+          </button>
+        ))}
+      </div>
+      <button
+        type="button"
+        role="menuitem"
+        onClick={() => {
+          close();
+          engine.linkSelectedToNewBoard();
+        }}
+        className={item}
+      >
+        <Plus size={16} weight="bold" className="text-violet-600" />
+        New board…
+      </button>
+      {linked && (
+        <>
+          <div className="mx-2 my-1 h-px bg-orange-950/10" />
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              close();
+              engine.unlinkSelected();
+            }}
+            className={item}
+          >
+            <LinkSimpleBreak size={16} weight="bold" className="text-stone-500" />
+            Unlink
+          </button>
+        </>
+      )}
     </>
   );
 }

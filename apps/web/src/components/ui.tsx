@@ -150,6 +150,7 @@ export function PopoverButton({
   label,
   trigger,
   menu = false,
+  text = false,
   className,
   children,
 }: {
@@ -157,6 +158,8 @@ export function PopoverButton({
   trigger: ReactNode;
   /** A vertical menu instead of a bar. */
   menu?: boolean;
+  /** The trigger is an icon plus a word, like a TextButton. */
+  text?: boolean;
   className?: string;
   children: (close: () => void) => ReactNode;
 }) {
@@ -184,20 +187,25 @@ export function PopoverButton({
     return () => window.removeEventListener("resize", place);
   }, [open, ref, floating]);
 
+  const triggerProps = {
+    active: open,
+    "aria-haspopup": "true",
+    "aria-expanded": open,
+    onClick: () => setOpen(!open),
+    className,
+  } as const;
+
   return (
     <>
-      <IconButton
-        ref={ref}
-        compact
-        label={label}
-        active={open}
-        aria-haspopup="true"
-        aria-expanded={open}
-        onClick={() => setOpen(!open)}
-        className={className}
-      >
-        {trigger}
-      </IconButton>
+      {text ? (
+        <TextButton ref={ref} label={label} {...triggerProps}>
+          {trigger}
+        </TextButton>
+      ) : (
+        <IconButton ref={ref} compact label={label} {...triggerProps}>
+          {trigger}
+        </IconButton>
+      )}
       {open &&
         createPortal(
           <Floating
