@@ -15,7 +15,15 @@ import { createEraserTool } from "./tools/eraser.ts";
 import { createInkTool } from "./tools/ink.ts";
 import { createPlaceTool } from "./tools/place.ts";
 import { createSelectTool } from "./tools/select.ts";
-import { isLine, type BoardElement, type Label, type LabelStyle, type ToolId, type Width } from "./types.ts";
+import {
+  isLine,
+  type BoardElement,
+  type Label,
+  type LabelStyle,
+  type TextSize,
+  type ToolId,
+  type Width,
+} from "./types.ts";
 
 export interface EngineOptions {
   /** Basemaps to choose from; the first is the default. */
@@ -25,6 +33,7 @@ export interface EngineOptions {
 export interface SelectedPatch {
   color?: string;
   width?: Width;
+  textSize?: TextSize;
   label?: Label | null;
 }
 

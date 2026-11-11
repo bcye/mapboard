@@ -157,9 +157,19 @@ export class Scene {
     }
   }
 
+  /** Lines (with their arrowheads and labels) always stack below markers and post-its. */
   private rerank() {
+    const tier = (element: BoardElement) => (isLine(element) ? 0 : 1);
     const sorted = [...this.elements.values()].sort((a, b) =>
-      a.order < b.order ? -1 : a.order > b.order ? 1 : a.id < b.id ? -1 : 1,
+      tier(a) !== tier(b)
+        ? tier(a) - tier(b)
+        : a.order < b.order
+          ? -1
+          : a.order > b.order
+            ? 1
+            : a.id < b.id
+              ? -1
+              : 1,
     );
     this.ranks = new Map(sorted.map((element, index) => [element.id, index]));
   }

@@ -1,5 +1,10 @@
 /* Element styling uses Tailwind classes; this only covers what depends on the active tool. */
 
+/* Elements stack by z-index; keep that inside the map, below the toolbars. */
+.em-root {
+  isolation: isolate;
+}
+
 .em-root .em-point {
   pointer-events: none;
 }

@@ -123,4 +123,4 @@ export function paperColor(key: string | undefined): PaletteColor {
 }
 
 /** Line widths in px at the element's reference zoom. */
-export const STROKE_SIZE = { s: 3, m: 5, l: 9 } as const;
+export const STROKE_SIZE = { s: 2, m: 3, l: 5 } as const;

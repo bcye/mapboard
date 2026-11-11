@@ -19,7 +19,7 @@ export function createPlaceTool(ctx: ToolContext, kind: "marker" | "note"): Tool
     if (kind === "marker") {
       board.add({ ...base, kind, color: prefs.ink });
     } else {
-      board.add({ ...base, kind, text: "", color: prefs.paper });
+      board.add({ ...base, kind, text: "", color: prefs.paper, textSize: prefs.textSize });
       ctx.setTool("select");
       ctx.select(base.id);
       ctx.points.editNote(base.id);

@@ -13,6 +13,9 @@ export interface Label {
 
 export type Width = "s" | "m" | "l";
 
+/** Post-it text size. */
+export type TextSize = "s" | "m" | "l";
+
 interface Base {
   id: string;
   /** Sortable string for stacking (fractional index). */
@@ -47,6 +50,8 @@ export interface NoteElement extends Base {
   at: LngLat;
   text: string;
   color: string;
+  /** Unset means medium. */
+  textSize?: TextSize;
   /**
    * Size set by resizing, in px at base size. The height is a minimum:
    * the post-it still grows to fit its text. Unset means the default size.
