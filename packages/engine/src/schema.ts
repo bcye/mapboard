@@ -1,6 +1,8 @@
 import type { BoardElement, Label, LabelStyle, Width } from "./types.ts";
 
-const LABEL_STYLES: LabelStyle[] = ["plain", "box", "note"];
+const LABEL_STYLES: LabelStyle[] = ["plain", "box"];
+/** Styles from older versions, read as the style that replaced them. */
+const LEGACY_LABEL_STYLES: Record<string, LabelStyle> = { note: "box" };
 const WIDTHS: Width[] = ["s", "m", "l"];
 
 type Obj = Record<string, unknown>;
@@ -19,8 +21,11 @@ const isLngLat = (v: unknown) =>
 
 const isSize = (v: unknown) => Array.isArray(v) && v.length === 2 && v.every((n) => isNum(n) && n > 0);
 
-function isLabel(v: unknown): v is Label {
-  return isObj(v) && isStr(v.text) && LABEL_STYLES.includes(v.style as LabelStyle);
+function parseLabel(v: unknown): Label | null {
+  if (!isObj(v) || !isStr(v.text) || !isStr(v.style)) return null;
+  if (LABEL_STYLES.includes(v.style as LabelStyle)) return v as unknown as Label;
+  const style = LEGACY_LABEL_STYLES[v.style];
+  return style ? { ...v, text: v.text, style } : null;
 }
 
 /**
@@ -28,12 +33,17 @@ function isLabel(v: unknown): v is Label {
  * data written by newer versions survives a round trip. Returns null for
  * anything this version can't draw.
  */
-export function parseElement(value: unknown): BoardElement | null {
-  if (!isObj(value)) return null;
+export function parseElement(input: unknown): BoardElement | null {
+  if (!isObj(input)) return null;
+  let value: Obj = input;
   if (!isStr(value.id) || value.id === "" || !isStr(value.order) || !isNum(value.refZoom)) {
     return null;
   }
-  if (value.label !== undefined && !isLabel(value.label)) return null;
+  if (value.label !== undefined) {
+    const label = parseLabel(value.label);
+    if (!label) return null;
+    if (label !== value.label) value = { ...value, label };
+  }
   switch (value.kind) {
     case "stroke":
     case "arrow": {
@@ -45,6 +55,7 @@ export function parseElement(value: unknown): BoardElement | null {
       return value as unknown as BoardElement;
     }
     case "marker":
+      if (value.boardId !== undefined && !isStr(value.boardId)) return null;
       return isLngLat(value.at) && isStr(value.color) ? (value as unknown as BoardElement) : null;
     case "note":
       return isLngLat(value.at) &&
@@ -54,8 +65,10 @@ export function parseElement(value: unknown): BoardElement | null {
         ? (value as unknown as BoardElement)
         : null;
     case "pin":
-      return isLngLat(value.at) && isStr(value.boardId) && isStr(value.color)
-        ? (value as unknown as BoardElement)
+      // Board pins from older versions are markers linked to a board.
+      if (value.boardId !== undefined && !isStr(value.boardId)) return null;
+      return isLngLat(value.at) && isStr(value.color)
+        ? ({ ...value, kind: "marker" } as unknown as BoardElement)
         : null;
     default:
       return null;

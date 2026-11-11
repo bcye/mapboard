@@ -29,7 +29,7 @@ interface Head {
 
 /**
  * Arrowheads as MapLibre DOM Markers, so they scale like the line and stay at
- * the edge of a snapped post-it or pin, whose size relative to the map changes
+ * the edge of a snapped post-it, whose size relative to the map changes
  * with zoom.
  */
 export class ArrowHeads {

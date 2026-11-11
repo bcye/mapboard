@@ -46,7 +46,7 @@ export interface HeadPlacement {
   direction: XY;
 }
 
-/** Where a line's end sits inside: a box around a post-it or pin, or a small one around a marker's tip. */
+/** Where a line's end sits inside: a box around a post-it, or a small one around a marker's tip. */
 export interface SnapShape {
   center: XY;
   halfWidth: number;

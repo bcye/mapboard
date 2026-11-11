@@ -1,26 +1,29 @@
 import { atom } from "nanostores";
 import type { History } from "./board.ts";
-import type { BoardElement, ToolId, Width } from "./types.ts";
+import type { BoardElement, LabelStyle, ToolId, Width } from "./types.ts";
 
 /** Tool settings, remembered on this device. */
 export interface ToolPrefs {
-  /** Palette key for strokes, arrows, markers and pins. */
+  /** Palette key for strokes, arrows and markers. */
   ink: string;
   /** Palette key for post-its. */
   paper: string;
   width: Width;
+  /** Style for new labels: the last one picked. */
+  labelStyle: LabelStyle;
   /** Index into the configured map styles. */
   mapStyle: number;
 }
 
 const PREFS_KEY = "map-board:prefs";
 
-const defaultPrefs: ToolPrefs = { ink: "rose", paper: "amber", width: "m", mapStyle: 0 };
+const defaultPrefs: ToolPrefs = { ink: "rose", paper: "amber", width: "m", labelStyle: "plain", mapStyle: 0 };
 
 function loadPrefs(): ToolPrefs {
   try {
     const raw = localStorage.getItem(PREFS_KEY);
-    return raw ? { ...defaultPrefs, ...(JSON.parse(raw) as Partial<ToolPrefs>) } : defaultPrefs;
+    const prefs = raw ? { ...defaultPrefs, ...(JSON.parse(raw) as Partial<ToolPrefs>) } : defaultPrefs;
+    return prefs.labelStyle === "box" ? prefs : { ...prefs, labelStyle: "plain" };
   } catch {
     return defaultPrefs;
   }
@@ -39,15 +42,18 @@ export function createUiState() {
   return {
     $tool: atom<ToolId>("select"),
     $prefs,
-    /** Board a new pin links to: a board id, or "new" to create one. */
-    $pinTarget: atom<string>("new"),
-    /** Name for the board a new pin creates. Empty means a default name. */
-    $pinName: atom<string>(""),
+    /** The element placed last with a place tool, e.g. for first-use hints. */
+    $placed: atom<{ id: string; kind: "marker" | "note" } | null>(null),
     $selection: atom<string | null>(null),
     /** Current value of the selected element, kept in sync with the board. */
     $selected: atom<BoardElement | null>(null),
     /** Post-it whose text is being edited. */
     $editing: atom<string | null>(null),
+    /**
+     * Label being edited on the map, with the style it will be saved in.
+     * `board` names a new board for a marker to link to instead.
+     */
+    $labelDraft: atom<{ id: string; style: LabelStyle; purpose: "label" | "board" } | null>(null),
     $history: atom<History>({ canUndo: false, canRedo: false }),
     $boardId: atom<string | null>(null),
     $loading: atom<boolean>(true),

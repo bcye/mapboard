@@ -26,7 +26,7 @@ export type SizeOf = (id: string) => { width: number; height: number } | null;
 /** Temporary positions while something is being dragged. Not saved. */
 export type Override = { at: LngLat } | { offset: XY };
 
-const FALLBACK_SIZE = { note: { width: 144, height: 72 }, pin: { width: 150, height: 44 } };
+const FALLBACK_SIZE = { note: { width: 144, height: 72 } };
 
 /** How far elements of this kind grow and shrink with zoom. */
 export const scaleRangeFor = (kind: ElementKind | "line-label"): ScaleRange =>
@@ -97,7 +97,7 @@ export class Scene {
 
   /**
    * The line in Mercator space, with drag offsets and snapped ends applied.
-   * Snapped ends go to the point's position (a post-it's or pin's centre, a
+   * Snapped ends go to the point's position (a post-it's centre, a
    * marker's tip), so the path doesn't depend on zoom. The element covers the
    * rest of the line.
    */

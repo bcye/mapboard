@@ -4,7 +4,6 @@ import {
   Eraser,
   MapPin,
   Note,
-  PushPin,
   ScribbleLoop,
   type Icon,
   type IconWeight,
@@ -52,12 +51,6 @@ export const TOOL_META: Record<ToolId, ToolMeta> = {
     Icon: Note,
     idle: "text-amber-600 hover:bg-amber-100",
     active: "bg-amber-400 text-stone-900 shadow-md shadow-amber-600/30",
-  },
-  pin: {
-    label: "Board pin",
-    Icon: PushPin,
-    idle: "text-violet-600 hover:bg-violet-50",
-    active: "bg-violet-500 text-white shadow-md shadow-violet-600/30",
   },
   eraser: {
     label: "Eraser",

@@ -15,20 +15,17 @@ import { createEraserTool } from "./tools/eraser.ts";
 import { createInkTool } from "./tools/ink.ts";
 import { createPlaceTool } from "./tools/place.ts";
 import { createSelectTool } from "./tools/select.ts";
-import { isLine, type Label, type ToolId, type Width } from "./types.ts";
+import { isLine, type BoardElement, type Label, type LabelStyle, type ToolId, type Width } from "./types.ts";
 
 export interface EngineOptions {
   /** Basemaps to choose from; the first is the default. */
   styles: MapStyleOption[];
-  /** URL that opens a board, used by board pins. */
-  boardUrl?: (id: string) => string;
 }
 
 export interface SelectedPatch {
   color?: string;
   width?: Width;
   label?: Label | null;
-  boardId?: string;
 }
 
 export interface Engine {
@@ -37,12 +34,25 @@ export interface Engine {
   openBoard(id: string): Promise<void>;
   setTool(tool: ToolId): void;
   setPrefs(patch: Partial<ToolPrefs>): void;
-  /** Board a new pin links to ("new" creates one, optionally named). */
-  setPinTarget(target: string, name?: string): void;
   select(id: string | null): void;
   updateSelected(patch: SelectedPatch): void;
   deleteSelected(): void;
   editSelectedNote(): void;
+  /** Edits the selected marker's or line's label on the map. */
+  editSelectedLabel(): void;
+  /** Style of the label being edited. */
+  setLabelStyle(style: LabelStyle): void;
+  /** Saves the label or post-it being edited. */
+  finishEditing(): void;
+  /** Links the selected marker to a board. */
+  linkSelected(boardId: string): void;
+  /**
+   * Links the selected marker to a new board named after its label. Without a
+   * label, the name is typed on the map first.
+   */
+  linkSelectedToNewBoard(): void;
+  /** Unlinks the selected marker; the board's name stays as its label. */
+  unlinkSelected(): void;
   undo(): void;
   redo(): void;
   zoomBy(delta: number): void;
@@ -60,8 +70,7 @@ export const TOOLS: { id: ToolId; key: string }[] = [
   { id: "arrow", key: "3" },
   { id: "marker", key: "4" },
   { id: "note", key: "5" },
-  { id: "pin", key: "6" },
-  { id: "eraser", key: "7" },
+  { id: "eraser", key: "6" },
 ];
 
 const LETTER_SHORTCUTS: Record<string, ToolId> = {
@@ -72,7 +81,6 @@ const LETTER_SHORTCUTS: Record<string, ToolId> = {
   a: "arrow",
   m: "marker",
   n: "note",
-  b: "pin",
   e: "eraser",
 };
 
@@ -90,6 +98,10 @@ function loadCamera(id: string): { center: [number, number]; zoom: number } | nu
   }
 }
 
+/** Elements with a label you can edit. A linked marker's label is its board's name. */
+const hasLabel = (element: BoardElement | undefined) =>
+  element !== undefined && ((element.kind === "marker" && !element.boardId) || isLine(element));
+
 const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
   (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
@@ -97,7 +109,6 @@ const isTyping = (target: EventTarget | null) =>
 export function createEngine(container: HTMLElement, options: EngineOptions): Engine {
   const state = createUiState();
   const styles = options.styles;
-  const boardUrl = options.boardUrl ?? ((id: string) => `#/board/${id}`);
   const styleIndex = () => Math.min(state.$prefs.get().mapStyle, styles.length - 1);
 
   container.classList.add("em-root");
@@ -142,19 +153,22 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
       if (state.$tool.get() !== "select") return;
       const element = scene.elements.get(id);
       if (!element) return;
-      if (element.kind === "pin") {
-        select(id);
-        window.open(boardUrl(element.boardId), "_blank", "noopener");
-      } else if (element.kind === "note" && state.$selection.get() === id) {
+      if (element.kind === "note" && state.$selection.get() === id) {
         points.editNote(id);
       } else {
         select(id);
       }
     },
     doubleClick(id) {
-      if (state.$tool.get() !== "select" || scene.elements.get(id)?.kind !== "note") return;
-      select(id);
-      points.editNote(id);
+      if (state.$tool.get() !== "select") return;
+      const element = scene.elements.get(id);
+      if (element?.kind === "note") {
+        select(id);
+        points.editNote(id);
+      } else if (hasLabel(element)) {
+        select(id);
+        editLabel(id);
+      }
     },
     dragStart: (id) => select(id),
     drag(id, at) {
@@ -176,9 +190,41 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
       preview(scene.linesAttachedTo(id));
     },
     noteText: (id, text) => board?.update(id, { text }),
+    labelText(id, text, style) {
+      const draft = state.$labelDraft.get();
+      state.$labelDraft.set(null);
+      if (draft?.purpose === "board") {
+        if (text) link(id, createBoardMeta(text).id);
+        return;
+      }
+      const current = scene.elements.get(id)?.label;
+      if (text === (current?.text ?? "") && style === (current?.style ?? style)) return;
+      board?.update(id, { label: text ? { text, style } : undefined });
+    },
     boardName: (id) => findBoard(id)?.name ?? null,
   });
   const lines = new LinesRenderer(map, scene);
+
+  function editLabel(id: string) {
+    const element = scene.elements.get(id);
+    if (!hasLabel(element) || state.$labelDraft.get()) return;
+    const style = element?.label?.style ?? state.$prefs.get().labelStyle;
+    state.$labelDraft.set({ id, style, purpose: "label" });
+    points.editLabel(id, style);
+    if (points.editingId !== id) state.$labelDraft.set(null);
+  }
+
+  /** Types a name for a new board on the map, then links the marker to it. */
+  function nameNewBoard(id: string) {
+    if (scene.elements.get(id)?.kind !== "marker" || state.$labelDraft.get()) return;
+    state.$labelDraft.set({ id, style: "box", purpose: "board" });
+    points.editLabel(id, "box", "Name the board…");
+    if (points.editingId !== id) state.$labelDraft.set(null);
+  }
+
+  // `kind` is written too: board pins from older versions are still stored as "pin".
+  const link = (id: string, boardId: string) =>
+    board?.update(id, { kind: "marker", boardId, label: undefined });
   const draft = new DraftLayer(map);
 
   const context: ToolContext = {
@@ -190,6 +236,7 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
     draft,
     board: () => board,
     select,
+    editLabel,
     setTool: (tool) => setTool(tool),
     preview,
   };
@@ -200,7 +247,6 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
     arrow: createInkTool(context, "arrow"),
     marker: createPlaceTool(context, "marker"),
     note: createPlaceTool(context, "note"),
-    pin: createPlaceTool(context, "pin"),
     eraser: createEraserTool(context),
   };
   let tool: ToolId = "select";
@@ -312,7 +358,7 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
     }
   });
 
-  const stopBoards = $boards.listen(() => points.refreshPins());
+  const stopBoards = $boards.listen(() => points.refreshLinks());
 
   const onKeyDown = (event: KeyboardEvent) => {
     if (isTyping(event.target)) return;
@@ -340,6 +386,9 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
     } else if (key === "enter" && state.$selected.get()?.kind === "note") {
       event.preventDefault();
       engine.editSelectedNote();
+    } else if (key === "enter" && hasLabel(state.$selected.get() ?? undefined)) {
+      event.preventDefault();
+      engine.editSelectedLabel();
     } else {
       const next = TOOLS.find((t) => t.key === key)?.id ?? LETTER_SHORTCUTS[key];
       if (next) setTool(next);
@@ -351,6 +400,8 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
     for (const stop of unsubscribe) stop();
     unsubscribe = [];
     tools[tool].cancel?.();
+    points.finishEditing();
+    state.$labelDraft.set(null);
     select(null);
     points.clear();
     lines.clear();
@@ -395,10 +446,6 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
     setPrefs(patch) {
       state.$prefs.set({ ...state.$prefs.get(), ...patch });
     },
-    setPinTarget(target, name) {
-      state.$pinTarget.set(target);
-      if (name !== undefined) state.$pinName.set(name);
-    },
     select,
     updateSelected(patch) {
       const id = state.$selection.get();
@@ -415,6 +462,41 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
     editSelectedNote() {
       const id = state.$selection.get();
       if (id && scene.elements.get(id)?.kind === "note") points.editNote(id);
+    },
+    editSelectedLabel() {
+      const id = state.$selection.get();
+      if (id) editLabel(id);
+    },
+    setLabelStyle(style) {
+      const draft = state.$labelDraft.get();
+      if (!draft) return;
+      state.$labelDraft.set({ ...draft, style });
+      points.setLabelStyle(style);
+      engine.setPrefs({ labelStyle: style });
+    },
+    finishEditing: () => points.finishEditing(),
+    linkSelected(boardId) {
+      const id = state.$selection.get();
+      if (id && scene.elements.get(id)?.kind === "marker") link(id, boardId);
+    },
+    linkSelectedToNewBoard() {
+      const id = state.$selection.get();
+      const element = id ? scene.elements.get(id) : undefined;
+      if (!id || element?.kind !== "marker") return;
+      const name = element.boardId ? "" : (element.label?.text ?? "");
+      if (name) link(id, createBoardMeta(name).id);
+      else nameNewBoard(id);
+    },
+    unlinkSelected() {
+      const id = state.$selection.get();
+      const element = id ? scene.elements.get(id) : undefined;
+      if (!id || element?.kind !== "marker" || !element.boardId) return;
+      const name = findBoard(element.boardId)?.name;
+      board?.update(id, {
+        kind: "marker",
+        boardId: undefined,
+        label: name ? { text: name, style: "box" } : undefined,
+      });
     },
     undo: () => board?.undo(),
     redo: () => board?.redo(),
