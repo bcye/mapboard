@@ -139,4 +139,9 @@ describe("scene", () => {
     const { scene } = sceneWith(marker, arrow);
     expect(scene.rank("l")).toBeLessThan(scene.rank("m"));
   });
+
+  it("stacks lines below points, even newer ones", () => {
+    const { scene } = sceneWith(marker, { ...arrow, order: "z9" });
+    expect(scene.rank("l")).toBeLessThan(scene.rank("m"));
+  });
 });
