@@ -88,7 +88,7 @@ export function BoardLinkHint() {
         <p className="text-sm leading-snug text-stone-600">
           <span className="font-hand text-xl leading-6 font-semibold text-stone-800">Planning a city?</span>
           <br />
-          Select a marker and tap <span className="font-semibold text-stone-800">Own board</span> to plan it
+          Select a marker and tap <span className="font-semibold text-stone-800">Link Board</span> to plan it
           on a board of its own.
         </p>
         <button
