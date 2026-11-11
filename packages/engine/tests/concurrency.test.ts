@@ -143,13 +143,13 @@ describe("undo with another peer", () => {
     a.add(marker("m"));
     sync();
     a.update("m", { color: "sky" });
-    b.update("m", { label: { text: "Lunch", style: "note" } });
+    b.update("m", { label: { text: "Lunch", style: "box" } });
     sync();
 
     a.undo();
     sync();
     expectSame(a, b);
-    expect(a.get("m")).toMatchObject({ color: "rose", label: { text: "Lunch", style: "note" } });
+    expect(a.get("m")).toMatchObject({ color: "rose", label: { text: "Lunch", style: "box" } });
   });
 
   it("doesn't make the other peer's changes undoable", () => {

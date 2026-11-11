@@ -13,7 +13,8 @@
   cursor: text;
 }
 
-.em-root[data-tool="select"] .em-point.em-editing [data-note-text] {
+.em-root[data-tool="select"] .em-point.em-editing [data-note-text],
+.em-root[data-tool="select"] .em-point.em-editing [data-label-text] {
   user-select: text;
   -webkit-user-select: text;
 }

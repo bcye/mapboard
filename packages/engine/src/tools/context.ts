@@ -17,6 +17,8 @@ export interface ToolContext {
   draft: DraftLayer;
   board(): Board | null;
   select(id: string | null): void;
+  /** Starts editing a marker's or line's label on the map. */
+  editLabel(id: string): void;
   setTool(tool: ToolId): void;
   /** Redraws ids that depend on a drag preview in the scene. */
   preview(ids: Iterable<string>): void;

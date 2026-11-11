@@ -1,4 +1,4 @@
-import { ArrowSquareOut, Check, PencilSimpleLine, Tag, Trash, X } from "@phosphor-icons/react";
+import { ArrowSquareOut, Check, PencilSimpleLine, Tag, Trash } from "@phosphor-icons/react";
 import { useStore } from "@nanostores/react";
 import {
   $boards,
@@ -7,12 +7,11 @@ import {
   inkColor,
   paperColor,
   type BoardElement,
-  type Label,
   type LabelStyle,
   type ToolId,
   type Width,
 } from "engine";
-import { useState, type ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { cx } from "../lib/cx.ts";
 import { useEngine } from "../lib/engine.ts";
 import { boardUrl } from "../lib/router.ts";
@@ -23,6 +22,10 @@ export function ToolOptions() {
   const engine = useEngine();
   const tool = useStore(engine.state.$tool);
   const selected = useStore(engine.state.$selected);
+  const labelDraft = useStore(engine.state.$labelDraft);
+  if (labelDraft && selected?.id === labelDraft.id) {
+    return <LabelStyleBar style={labelDraft.style} color={selected.color} />;
+  }
   if (tool === "select") return selected ? <SelectionOptions key={selected.id} element={selected} /> : null;
   if (tool === "eraser") return null;
   return <ToolSettings tool={tool} />;
@@ -69,9 +72,6 @@ function ToolSettings({ tool }: { tool: Exclude<ToolId, "select" | "eraser"> }) 
 
 function SelectionOptions({ element }: { element: BoardElement }) {
   const engine = useEngine();
-  const [editingLabel, setEditingLabel] = useState(false);
-  if (editingLabel) return <LabelEditor label={element.label} onDone={() => setEditingLabel(false)} />;
-
   const isLine = element.kind === "stroke" || element.kind === "arrow";
   return (
     <OptionsPanel>
@@ -122,13 +122,15 @@ function SelectionOptions({ element }: { element: BoardElement }) {
           </IconButton>
         </>
       )}
-      <IconButton
-        compact
-        label={element.label ? "Edit label" : "Add label"}
-        onClick={() => setEditingLabel(true)}
-      >
-        <Tag size={22} weight="duotone" className="text-orange-500" />
-      </IconButton>
+      {(isLine || element.kind === "marker") && (
+        <IconButton
+          compact
+          label={element.label ? "Edit label" : "Add label"}
+          onClick={() => engine.editSelectedLabel()}
+        >
+          <Tag size={22} weight="duotone" className="text-orange-500" />
+        </IconButton>
+      )}
       <IconButton
         compact
         label="Delete"
@@ -141,86 +143,50 @@ function SelectionOptions({ element }: { element: BoardElement }) {
   );
 }
 
-const LABEL_STYLES: { style: LabelStyle; name: string; preview: string }[] = [
-  {
-    style: "plain",
-    name: "Plain label",
-    preview: "font-semibold text-stone-800 [text-shadow:0_1px_2px_rgb(0_0_0/0.25)]",
-  },
-  {
-    style: "box",
-    name: "Label in a box",
-    preview: "rounded-md bg-white px-1 shadow-sm ring-1 ring-stone-900/15",
-  },
-  { style: "note", name: "Label on a post-it", preview: "-rotate-3 bg-amber-200 px-1 shadow-sm" },
-];
-
-function LabelEditor({ label, onDone }: { label: Label | undefined; onDone: () => void }) {
+/** While a label is edited on the map: its style, and done. */
+function LabelStyleBar({ style, color }: { style: LabelStyle; color: string }) {
   const engine = useEngine();
-  const [text, setText] = useState(label?.text ?? "");
-  const [style, setStyle] = useState<LabelStyle>(label?.style ?? "plain");
-  const save = (nextStyle = style) => {
-    const trimmed = text.trim();
-    engine.updateSelected({ label: trimmed ? { text: trimmed, style: nextStyle } : null });
-  };
+  // Buttons keep focus in the label, so typing isn't interrupted.
+  const keepFocus = (event: MouseEvent) => event.preventDefault();
   return (
     <OptionsPanel>
-      <Tag size={22} weight="duotone" className="mx-2 shrink-0 text-orange-500" />
-      <input
-        autoFocus
-        value={text}
-        placeholder="Label…"
-        aria-label="Label text"
-        onChange={(event) => setText(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            save();
-            onDone();
-          } else if (event.key === "Escape") {
-            onDone();
-          }
-        }}
-        className="h-10 w-36 min-w-0 rounded-xl bg-white/70 px-2 font-hand text-2xl leading-none font-semibold text-stone-800 ring-1 ring-orange-950/10 outline-none placeholder:text-stone-400 focus:ring-2 focus:ring-orange-400 md:w-48"
-      />
-      <Divider />
-      {LABEL_STYLES.map((option) => (
-        <IconButton
-          compact
-          key={option.style}
-          label={option.name}
-          active={style === option.style}
-          onClick={() => {
-            setStyle(option.style);
-            if (text.trim()) save(option.style);
-          }}
+      <IconButton
+        compact
+        label="Plain label"
+        active={style === "plain"}
+        onMouseDown={keepFocus}
+        onClick={() => engine.setLabelStyle("plain")}
+      >
+        <span
+          className={cx(
+            "font-hand text-xl leading-5 font-semibold [text-shadow:0_0_2px_white]",
+            inkColor(color).dark,
+          )}
         >
-          <span className={cx("font-hand text-lg leading-5", option.preview)}>Aa</span>
-        </IconButton>
-      ))}
+          Aa
+        </span>
+      </IconButton>
+      <IconButton
+        compact
+        label="Label in a box"
+        active={style === "box"}
+        onMouseDown={keepFocus}
+        onClick={() => engine.setLabelStyle("box")}
+      >
+        <span className="rounded-md bg-white px-1 font-hand text-lg leading-5 font-medium text-stone-800 shadow-sm ring-1 ring-stone-900/15">
+          Aa
+        </span>
+      </IconButton>
       <Divider />
       <IconButton
         compact
         label="Done"
-        onClick={() => {
-          save();
-          onDone();
-        }}
+        onMouseDown={keepFocus}
+        onClick={() => engine.finishEditing()}
         className="text-teal-600 hover:bg-teal-50"
       >
         <Check size={22} weight="bold" />
       </IconButton>
-      {label && (
-        <IconButton
-          compact
-          label="Remove label"
-          onClick={() => {
-            engine.updateSelected({ label: null });
-            onDone();
-          }}
-        >
-          <X size={20} weight="bold" />
-        </IconButton>
-      )}
     </OptionsPanel>
   );
 }

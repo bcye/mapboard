@@ -15,7 +15,7 @@ import { createEraserTool } from "./tools/eraser.ts";
 import { createInkTool } from "./tools/ink.ts";
 import { createPlaceTool } from "./tools/place.ts";
 import { createSelectTool } from "./tools/select.ts";
-import { isLine, type Label, type ToolId, type Width } from "./types.ts";
+import { isLine, type BoardElement, type Label, type LabelStyle, type ToolId, type Width } from "./types.ts";
 
 export interface EngineOptions {
   /** Basemaps to choose from; the first is the default. */
@@ -43,6 +43,12 @@ export interface Engine {
   updateSelected(patch: SelectedPatch): void;
   deleteSelected(): void;
   editSelectedNote(): void;
+  /** Edits the selected marker's or line's label on the map. */
+  editSelectedLabel(): void;
+  /** Style of the label being edited. */
+  setLabelStyle(style: LabelStyle): void;
+  /** Saves the label or post-it being edited. */
+  finishEditing(): void;
   undo(): void;
   redo(): void;
   zoomBy(delta: number): void;
@@ -89,6 +95,10 @@ function loadCamera(id: string): { center: [number, number]; zoom: number } | nu
     return null;
   }
 }
+
+/** Elements that carry a label. */
+const hasLabel = (element: BoardElement | undefined) =>
+  element !== undefined && (element.kind === "marker" || isLine(element));
 
 const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
@@ -152,9 +162,15 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
       }
     },
     doubleClick(id) {
-      if (state.$tool.get() !== "select" || scene.elements.get(id)?.kind !== "note") return;
-      select(id);
-      points.editNote(id);
+      if (state.$tool.get() !== "select") return;
+      const element = scene.elements.get(id);
+      if (element?.kind === "note") {
+        select(id);
+        points.editNote(id);
+      } else if (hasLabel(element)) {
+        select(id);
+        editLabel(id);
+      }
     },
     dragStart: (id) => select(id),
     drag(id, at) {
@@ -167,9 +183,24 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
       preview(scene.linesAttachedTo(id));
     },
     noteText: (id, text) => board?.update(id, { text }),
+    labelText(id, text, style) {
+      state.$labelDraft.set(null);
+      const current = scene.elements.get(id)?.label;
+      if (text === (current?.text ?? "") && style === (current?.style ?? style)) return;
+      board?.update(id, { label: text ? { text, style } : undefined });
+    },
     boardName: (id) => findBoard(id)?.name ?? null,
   });
   const lines = new LinesRenderer(map, scene);
+
+  function editLabel(id: string) {
+    const element = scene.elements.get(id);
+    if (!hasLabel(element) || state.$labelDraft.get()) return;
+    const style = element?.label?.style ?? state.$prefs.get().labelStyle;
+    state.$labelDraft.set({ id, style });
+    points.editLabel(id, style);
+    if (points.editingId !== id) state.$labelDraft.set(null);
+  }
   const draft = new DraftLayer(map);
 
   const context: ToolContext = {
@@ -181,6 +212,7 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
     draft,
     board: () => board,
     select,
+    editLabel,
     setTool: (tool) => setTool(tool),
     preview,
   };
@@ -327,6 +359,9 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
     } else if (key === "enter" && state.$selected.get()?.kind === "note") {
       event.preventDefault();
       engine.editSelectedNote();
+    } else if (key === "enter" && hasLabel(state.$selected.get() ?? undefined)) {
+      event.preventDefault();
+      engine.editSelectedLabel();
     } else {
       const next = TOOLS.find((t) => t.key === key)?.id ?? LETTER_SHORTCUTS[key];
       if (next) setTool(next);
@@ -338,6 +373,8 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
     for (const stop of unsubscribe) stop();
     unsubscribe = [];
     tools[tool].cancel?.();
+    points.finishEditing();
+    state.$labelDraft.set(null);
     select(null);
     points.clear();
     lines.clear();
@@ -403,6 +440,18 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
       const id = state.$selection.get();
       if (id && scene.elements.get(id)?.kind === "note") points.editNote(id);
     },
+    editSelectedLabel() {
+      const id = state.$selection.get();
+      if (id) editLabel(id);
+    },
+    setLabelStyle(style) {
+      const draft = state.$labelDraft.get();
+      if (!draft) return;
+      state.$labelDraft.set({ ...draft, style });
+      points.setLabelStyle(style);
+      engine.setPrefs({ labelStyle: style });
+    },
+    finishEditing: () => points.finishEditing(),
     undo: () => board?.undo(),
     redo: () => board?.redo(),
     zoomBy: (delta) => map.easeTo({ zoom: map.getZoom() + delta, duration: 250 }),

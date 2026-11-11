@@ -20,6 +20,16 @@ export function createSelectTool(ctx: ToolContext): Tool {
     ctx.select(lineAt(event.point.x, event.point.y));
   };
 
+  // Double-clicking a line edits its label instead of zooming.
+  const onDoubleClick = (event: MapMouseEvent) => {
+    if (fromPointElement(event)) return;
+    const id = lineAt(event.point.x, event.point.y);
+    if (!id) return;
+    event.preventDefault();
+    ctx.select(id);
+    ctx.editLabel(id);
+  };
+
   const onDown = (event: MapMouseEvent | MapTouchEvent) => {
     if (fromPointElement(event)) return;
     if ("points" in event && event.points.length !== 1) return;
@@ -88,11 +98,13 @@ export function createSelectTool(ctx: ToolContext): Tool {
   return {
     activate() {
       ctx.map.on("click", onClick);
+      ctx.map.on("dblclick", onDoubleClick);
       ctx.map.on("mousedown", onDown);
       ctx.map.on("touchstart", onDown);
     },
     deactivate() {
       ctx.map.off("click", onClick);
+      ctx.map.off("dblclick", onDoubleClick);
       ctx.map.off("mousedown", onDown);
       ctx.map.off("touchstart", onDown);
       onCancel();

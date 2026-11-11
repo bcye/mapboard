@@ -4,7 +4,7 @@ export type LngLat = [lng: number, lat: number];
 /** A drawn input point. Pressure is only stored for pen input. */
 export type InkPoint = [lng: number, lat: number, pressure?: number];
 
-export type LabelStyle = "plain" | "box" | "note";
+export type LabelStyle = "plain" | "box";
 
 export interface Label {
   text: string;
@@ -19,6 +19,7 @@ interface Base {
   order: string;
   /** Map zoom when the element was created. Drawn size is `size × 2^(zoom − refZoom)`. */
   refZoom: number;
+  /** Shown on markers and lines. */
   label?: Label;
 }
 
