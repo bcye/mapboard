@@ -18,7 +18,7 @@ jobs:
       # Type-checks and builds the web app into apps/web/dist
       - run: vp run web#build
         env:
-          VITE_MAP_STYLES: ${{ secrets.VITE_MAP_STYLES }}
+          VITE_MAP_STYLE: ${{ secrets.VITE_MAP_STYLE }}
 
       # Deploy to Bunny.net. Uses the Bun that Vite+ manages on CI, so no setup-bun step.
       - run: bun x bunnyup deploy
