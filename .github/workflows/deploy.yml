@@ -24,3 +24,13 @@ jobs:
       - run: bun x bunnyup deploy
         env:
           BUNNY_API_KEY: ${{ secrets.BUNNY_API_KEY }}
+
+      # bunnyup switches the pull zone to the new storage zone but doesn't purge the CDN cache,
+      # so edges keep serving the old index.html, which references assets the new zone lacks.
+      - name: Purge CDN cache
+        run: |
+          PULL_ZONE_ID=$(jq -r .pullZoneId bunnyup.json)
+          curl -fsS -X POST "https://api.bunny.net/pullzone/$PULL_ZONE_ID/purgeCache" \
+            -H "AccessKey: $BUNNY_API_KEY"
+        env:
+          BUNNY_API_KEY: ${{ secrets.BUNNY_API_KEY }}
