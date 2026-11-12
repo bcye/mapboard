@@ -5,7 +5,11 @@
  */
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./engine.css";
-import { setWorkerUrl } from "maplibre-gl";
+import { addProtocol, setWorkerUrl } from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
+import { Protocol } from "pmtiles";
 
 setWorkerUrl(workerUrl);
+
+/** Lets styles load vector tiles from a PMTiles archive via `pmtiles://` URLs. */
+addProtocol("pmtiles", new Protocol().tile);

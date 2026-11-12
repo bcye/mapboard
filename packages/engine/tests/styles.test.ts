@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vite-plus/test";
-import { FALLBACK_MAP_STYLES, parseMapStyles } from "../src/styles.ts";
+import { parseMapStyles, type MapStyleOption } from "../src/styles.ts";
+
+const FALLBACK: MapStyleOption[] = [{ name: "Default", url: "https://example.com/default.json" }];
 
 describe("map styles", () => {
   it("reads a JSON list of { name, url }", () => {
@@ -7,15 +9,17 @@ describe("map styles", () => {
       { name: "Streets", url: "https://example.com/streets.json" },
       { name: "Broken" },
     ]);
-    expect(parseMapStyles(raw)).toEqual([{ name: "Streets", url: "https://example.com/streets.json" }]);
+    expect(parseMapStyles(raw, FALLBACK)).toEqual([
+      { name: "Streets", url: "https://example.com/streets.json" },
+    ]);
   });
 
   it("falls back when unset or invalid", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    expect(parseMapStyles(undefined)).toBe(FALLBACK_MAP_STYLES);
-    expect(parseMapStyles("")).toBe(FALLBACK_MAP_STYLES);
-    expect(parseMapStyles("{nope")).toBe(FALLBACK_MAP_STYLES);
-    expect(parseMapStyles("[]")).toBe(FALLBACK_MAP_STYLES);
+    expect(parseMapStyles(undefined, FALLBACK)).toBe(FALLBACK);
+    expect(parseMapStyles("", FALLBACK)).toBe(FALLBACK);
+    expect(parseMapStyles("{nope", FALLBACK)).toBe(FALLBACK);
+    expect(parseMapStyles("[]", FALLBACK)).toBe(FALLBACK);
     expect(warn).toHaveBeenCalledTimes(2);
     warn.mockRestore();
   });
