@@ -32,7 +32,7 @@ To pass dev server flags, target the app directly, e.g. `vp -C apps/web dev --ho
 
 ## Map style
 
-The basemap is the [OSM Liberty](https://github.com/openmaptiles/osm-liberty-gl-style) style in [`apps/web/public/map-styles`](apps/web/public/map-styles), with vector tiles from the PMTiles planet build at `pmtiles-planet.b-cdn.net`. To use another MapLibre style URL (`pmtiles://` sources work), set `VITE_MAP_STYLE` in `apps/web/.env.local`, see [`apps/web/.env.example`](apps/web/.env.example). The deploy workflow reads it from the `VITE_MAP_STYLE` repository secret.
+The basemap is the [OSM Liberty](https://github.com/openmaptiles/osm-liberty-gl-style) style in [`apps/web/public/map-styles`](apps/web/public/map-styles), with vector tiles from the PMTiles planet build at `pmtiles-planet.b-cdn.net`.
 
 ## Data
 

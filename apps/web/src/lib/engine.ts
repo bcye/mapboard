@@ -1,13 +1,8 @@
 import { createContext, use } from "react";
 import type { Engine } from "engine";
 
-/**
- * Basemap style URL. Defaults to OSM Liberty (public/map-styles) on the PMTiles
- * planet build; VITE_MAP_STYLE overrides it. MapLibre needs an absolute URL.
- */
-export const mapStyle =
-  import.meta.env.VITE_MAP_STYLE?.trim() ||
-  new URL(`${import.meta.env.BASE_URL}map-styles/osm-liberty.json`, location.href).href;
+/** OSM Liberty (public/map-styles) on the PMTiles planet build. MapLibre needs an absolute URL. */
+export const mapStyle = new URL(`${import.meta.env.BASE_URL}map-styles/osm-liberty.json`, location.href).href;
 
 export const EngineContext = createContext<Engine | null>(null);
 
