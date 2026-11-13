@@ -68,6 +68,8 @@ export function createInkTool(ctx: ToolContext, kind: "stroke" | "arrow"): Tool 
     if (from) element.from = from;
     if (to && to !== from) element.to = to;
     board.add(element);
+    // The map draws the new line a few frames later.
+    ctx.draft.hold(ctx.lines.whenDrawn());
     reset();
   };
 

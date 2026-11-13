@@ -75,6 +75,10 @@ export class LinesRenderer {
   private features = new Map<string, LineFeature>();
   private pending = new Map<string, LineFeature | null>();
   private frame = 0;
+  /** Waiting for the next flush. */
+  private flushed: (() => void)[] = [];
+  /** The last data update sent to MapLibre. */
+  private sent: Promise<void> = Promise.resolve();
   private selected: string | null = null;
   private erasing = new Set<string>();
 
@@ -157,6 +161,20 @@ export class LinesRenderer {
     }
   }
 
+  /**
+   * Resolves once the lines updated so far are on screen, or after `timeout`
+   * ms. MapLibre updates its data in a worker and then reloads tiles, which
+   * takes a few frames.
+   */
+  whenDrawn(timeout = 500): Promise<void> {
+    const drawn = (async () => {
+      if (this.frame) await new Promise<void>((resolve) => this.flushed.push(resolve));
+      await this.sent;
+      await this.loadedRender();
+    })();
+    return Promise.race([drawn, new Promise<void>((resolve) => setTimeout(resolve, timeout))]);
+  }
+
   /** Moves arrowheads for the new zoom. Line widths follow on the GPU. */
   rescale(zoom: number) {
     this.heads.rescale(zoom);
@@ -166,6 +184,7 @@ export class LinesRenderer {
     this.heads.clear();
     cancelAnimationFrame(this.frame);
     this.frame = 0;
+    this.resolveFlushed();
     this.pending.clear();
     this.features.clear();
     this.selected = null;
@@ -217,9 +236,27 @@ export class LinesRenderer {
     }
     this.pending.clear();
     const source = this.source();
-    if (!source) return;
-    // `add` replaces features with the same id.
-    void source.updateData({ add, remove });
+    // `add` replaces features with the same id. By the time this resolves,
+    // the tiles it touches are reloading.
+    if (source) this.sent = source.updateData({ add, remove }).catch(() => {});
+    this.resolveFlushed();
+  }
+
+  private resolveFlushed() {
+    for (const resolve of this.flushed.splice(0)) resolve();
+  }
+
+  /** Resolves after the next frame drawn with every tile of the lines loaded. */
+  private loadedRender(): Promise<void> {
+    return new Promise((resolve) => {
+      const check = () => {
+        if (this.source() && !this.map.isSourceLoaded(LINES_SOURCE)) return;
+        this.map.off("render", check);
+        resolve();
+      };
+      this.map.on("render", check);
+      this.map.triggerRepaint();
+    });
   }
 
   private source() {

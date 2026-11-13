@@ -2,6 +2,14 @@ import type { Map as MapLibreMap } from "maplibre-gl";
 import type { XY } from "../geo.ts";
 import { headLength, headWings, placeHead, smoothLine } from "../ink.ts";
 
+interface Stroke {
+  points: readonly XY[];
+  width: number;
+  scale: number;
+  color: string;
+  arrow: boolean;
+}
+
 /**
  * A canvas over the map for the stroke or arrow being drawn, so inking has no
  * delay. The map doesn't move while drawing, so screen space is enough. It
@@ -10,6 +18,9 @@ import { headLength, headWings, placeHead, smoothLine } from "../ink.ts";
 export class DraftLayer {
   private canvas = document.createElement("canvas");
   private context = this.canvas.getContext("2d")!;
+  private current: Stroke | null = null;
+  /** Finished strokes, kept until the map draws their line. */
+  private held = new Set<Stroke>();
 
   private map: MapLibreMap;
 
@@ -18,13 +29,50 @@ export class DraftLayer {
     this.canvas.className = "em-draft";
     map.getContainer().append(this.canvas);
     map.on("resize", this.resize);
+    map.on("movestart", this.release);
     this.resize();
   }
 
   /** `width` is the base width, drawn at `scale` like finished lines. */
   draw(points: readonly XY[], width: number, scale: number, color: string, arrow: boolean) {
+    this.current = { points, width, scale, color, arrow };
+    this.paint();
+  }
+
+  /**
+   * Keeps the current stroke on screen until `until` settles, so it doesn't
+   * blink out before the map has drawn the finished line.
+   */
+  hold(until: Promise<void>) {
+    const stroke = this.current;
+    this.current = null;
+    if (!stroke) return;
+    this.held.add(stroke);
+    void until.finally(() => {
+      if (this.held.delete(stroke)) this.paint();
+    });
+  }
+
+  /** Removes the current stroke. Held ones stay until their line is drawn. */
+  clear() {
+    this.current = null;
+    this.paint();
+  }
+
+  destroy() {
+    this.map.off("resize", this.resize);
+    this.map.off("movestart", this.release);
+    this.canvas.remove();
+  }
+
+  private paint() {
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    for (const stroke of this.held) this.stroke(stroke);
+    if (this.current) this.stroke(this.current);
+  }
+
+  private stroke({ points, width, scale, color, arrow }: Stroke) {
     const ctx = this.context;
-    this.clear();
     const path = smoothLine(points);
     if (path.length === 0) return;
     const length = headLength(width) * scale;
@@ -48,14 +96,12 @@ export class DraftLayer {
     }
   }
 
-  clear() {
-    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-  }
-
-  destroy() {
-    this.map.off("resize", this.resize);
-    this.canvas.remove();
-  }
+  /** Held strokes are in screen space, so they can't follow the map. */
+  private release = () => {
+    if (this.held.size === 0) return;
+    this.held.clear();
+    this.paint();
+  };
 
   private resize = () => {
     const { clientWidth, clientHeight } = this.map.getContainer();
@@ -63,5 +109,6 @@ export class DraftLayer {
     this.canvas.width = Math.round(clientWidth * ratio);
     this.canvas.height = Math.round(clientHeight * ratio);
     this.context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    this.paint();
   };
 }
