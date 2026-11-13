@@ -9,6 +9,7 @@ import { ToolOptions } from "./components/ToolOptions.tsx";
 import { EngineContext } from "./lib/engine.ts";
 import { mapStyle } from "./lib/map-style.ts";
 import { boardUrl, rememberBoard, useBoardId } from "./lib/router.ts";
+import { pageTitle } from "./site.ts";
 
 export function App() {
   const host = useRef<HTMLDivElement>(null);
@@ -92,7 +93,7 @@ function useDocumentTitle() {
   const boardId = useBoardId();
   const name = boards.find((b) => b.id === boardId)?.name;
   useEffect(() => {
-    document.title = name ? `${name} · Map board` : "Map board";
+    document.title = pageTitle(name);
   }, [name]);
 }
 
