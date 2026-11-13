@@ -29,6 +29,8 @@ export interface EngineOptions {
   style: StyleSpecification | string;
   /** URL that opens a board, used by a linked marker's open button. */
   boardUrl?: (id: string) => string;
+  /** Extra HTML for the map's attribution control. */
+  attribution?: string;
 }
 
 export interface SelectedPatch {
@@ -126,7 +128,7 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
     style: options.style,
     center: DEFAULT_CAMERA.center,
     zoom: DEFAULT_CAMERA.zoom,
-    attributionControl: { compact: true },
+    attributionControl: { compact: true, customAttribution: options.attribution },
     dragRotate: false,
     pitchWithRotate: false,
     touchPitch: false,

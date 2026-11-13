@@ -10,6 +10,9 @@ import { EngineContext } from "./lib/engine.ts";
 import { mapStyle } from "./lib/map-style.ts";
 import { boardUrl, rememberBoard, useBoardId } from "./lib/router.ts";
 
+/** Link to the third-party notices emitted by `licenses.ts`. */
+const attribution = `<a href="${import.meta.env.BASE_URL}third-party-licenses.txt" target="_blank">Licenses</a>`;
+
 export function App() {
   const host = useRef<HTMLDivElement>(null);
   const [engine, setEngine] = useState<Engine | null>(null);
@@ -17,7 +20,7 @@ export function App() {
 
   // The engine owns the map and never re-renders through React.
   useEffect(() => {
-    const instance = createEngine(host.current!, { style: mapStyle, boardUrl });
+    const instance = createEngine(host.current!, { style: mapStyle, boardUrl, attribution });
     setEngine(instance);
     return () => {
       instance.destroy();
