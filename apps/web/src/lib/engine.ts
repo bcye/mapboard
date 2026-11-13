@@ -1,8 +1,5 @@
 import { createContext, use } from "react";
 import type { Engine } from "engine";
-import { parseMapStyles } from "engine";
-
-export const mapStyles = parseMapStyles(import.meta.env.VITE_MAP_STYLES);
 
 export const EngineContext = createContext<Engine | null>(null);
 

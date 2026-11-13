@@ -30,9 +30,9 @@ To pass dev server flags, target the app directly, e.g. `vp -C apps/web dev --ho
 
 `vp dev`, `vp test` and `vp build` are built-in commands. `vp run <name>` runs a `package.json` script, e.g. `vp run web#build` also type-checks the app with `tsc -b`. A pre-commit hook runs `vp check --fix` on staged files.
 
-## Map styles
+## Map style
 
-Basemaps come from `VITE_MAP_STYLES` in `apps/web/.env.local`: a JSON list of `{ name, url }` MapLibre style URLs, first one default. See [`apps/web/.env.example`](apps/web/.env.example) for MapTiler streets, outdoor and satellite. The deploy workflow reads it from the `VITE_MAP_STYLES` repository secret. Without it, the app uses OpenFreeMap styles, which need no key.
+The basemap is the [Protomaps](https://docs.protomaps.com/basemaps/maplibre) light style ([`apps/web/src/lib/map-style.ts`](apps/web/src/lib/map-style.ts)), with vector tiles from the PMTiles planet build at `pmtiles-planet.b-cdn.net`.
 
 ## Data
 

@@ -1,6 +1,6 @@
 # engine
 
-Framework-free board engine. A UI mounts it on an empty element with `createEngine(container, { styles })`, then calls `engine.openBoard(id)` and talks to it through commands (`setTool`, `updateSelected`, `undo`, …) and the nanostores in `engine.state`.
+Framework-free board engine. A UI mounts it on an empty element with `createEngine(container, { style })`, then calls `engine.openBoard(id)` and talks to it through commands (`setTool`, `updateSelected`, `undo`, …) and the nanostores in `engine.state`.
 
 | Module                  | Job                                                                                |
 | ----------------------- | ---------------------------------------------------------------------------------- |

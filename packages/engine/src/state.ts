@@ -13,8 +13,6 @@ export interface ToolPrefs {
   textSize: TextSize;
   /** Style for new labels: the last one picked. */
   labelStyle: LabelStyle;
-  /** Index into the configured map styles. */
-  mapStyle: number;
 }
 
 const PREFS_KEY = "map-board:prefs";
@@ -25,7 +23,6 @@ const defaultPrefs: ToolPrefs = {
   width: "m",
   textSize: "m",
   labelStyle: "plain",
-  mapStyle: 0,
 };
 
 function loadPrefs(): ToolPrefs {

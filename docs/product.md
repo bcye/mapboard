@@ -28,7 +28,7 @@
 ## Planned separate (possibly paid) features
 
 - Sync, collab, anything non-local
-- Tile selection other than default (satellite, oceanic etc.). Implement this one already.
+- Tile selection other than default (satellite, oceanic etc.)
 
 ## Not for now
 

@@ -1,5 +1,5 @@
 import "./map-assets.ts";
-import { LngLatBounds, Map as MapLibreMap } from "maplibre-gl";
+import { LngLatBounds, Map as MapLibreMap, type StyleSpecification } from "maplibre-gl";
 import { openBoard as openBoardDoc, type Board } from "./board.ts";
 import { $boards, createBoardMeta, ensureBoardMeta, findBoard, touchBoard } from "./boards.ts";
 import { createBoardFile, type BoardFile } from "./file.ts";
@@ -9,7 +9,6 @@ import { LinesRenderer } from "./render/lines.ts";
 import { PointsRenderer } from "./render/points.ts";
 import { Scene } from "./scene.ts";
 import { createUiState, type ToolPrefs, type UiState } from "./state.ts";
-import type { MapStyleOption } from "./styles.ts";
 import type { ScreenPoint, Tool, ToolContext } from "./tools/context.ts";
 import { createEraserTool } from "./tools/eraser.ts";
 import { createInkTool } from "./tools/ink.ts";
@@ -26,8 +25,8 @@ import {
 } from "./types.ts";
 
 export interface EngineOptions {
-  /** Basemaps to choose from; the first is the default. */
-  styles: MapStyleOption[];
+  /** MapLibre style (or its URL) for the basemap. */
+  style: StyleSpecification | string;
   /** URL that opens a board, used by a linked marker's open button. */
   boardUrl?: (id: string) => string;
 }
@@ -41,7 +40,6 @@ export interface SelectedPatch {
 
 export interface Engine {
   readonly state: UiState;
-  readonly styles: MapStyleOption[];
   openBoard(id: string): Promise<void>;
   setTool(tool: ToolId): void;
   setPrefs(patch: Partial<ToolPrefs>): void;
@@ -67,7 +65,6 @@ export interface Engine {
   undo(): void;
   redo(): void;
   zoomBy(delta: number): void;
-  setMapStyle(index: number): void;
   exportBoard(): BoardFile | null;
   /** Creates a new board from a backup, opens it and returns its id. */
   importFile(file: BoardFile): Promise<string>;
@@ -119,16 +116,14 @@ const isTyping = (target: EventTarget | null) =>
 
 export function createEngine(container: HTMLElement, options: EngineOptions): Engine {
   const state = createUiState();
-  const styles = options.styles;
   const boardUrl = options.boardUrl ?? ((id: string) => `#/board/${id}`);
-  const styleIndex = () => Math.min(state.$prefs.get().mapStyle, styles.length - 1);
 
   container.classList.add("em-root");
   container.dataset.tool = "select";
 
   const map = new MapLibreMap({
     container,
-    style: styles[styleIndex()]!.url,
+    style: options.style,
     center: DEFAULT_CAMERA.center,
     zoom: DEFAULT_CAMERA.zoom,
     attributionControl: { compact: true },
@@ -434,7 +429,6 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
 
   const engine: Engine = {
     state,
-    styles,
     async openBoard(id) {
       if (board?.id === id) return;
       closeBoard();
@@ -509,11 +503,6 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
     undo: () => board?.undo(),
     redo: () => board?.redo(),
     zoomBy: (delta) => map.easeTo({ zoom: map.getZoom() + delta, duration: 250 }),
-    setMapStyle(index) {
-      if (!styles[index] || index === styleIndex()) return;
-      engine.setPrefs({ mapStyle: index });
-      map.setStyle(styles[index].url, { diff: false });
-    },
     exportBoard() {
       if (!board) return null;
       return createBoardFile(findBoard(board.id)?.name ?? "Board", board.toJSON());

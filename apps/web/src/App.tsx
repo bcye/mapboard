@@ -2,11 +2,12 @@ import { useStore } from "@nanostores/react";
 import { $boards, createEngine, type Engine } from "engine";
 import { useEffect, useRef, useState } from "react";
 import { BoardMenu } from "./components/BoardMenu.tsx";
-import { HistoryControls, StylePicker, ZoomControls } from "./components/MapControls.tsx";
+import { HistoryControls, ZoomControls } from "./components/MapControls.tsx";
 import { BoardLinkHint, EmptyHint, Toasts } from "./components/Notices.tsx";
 import { Toolbar } from "./components/Toolbar.tsx";
 import { ToolOptions } from "./components/ToolOptions.tsx";
-import { EngineContext, mapStyles } from "./lib/engine.ts";
+import { EngineContext } from "./lib/engine.ts";
+import { mapStyle } from "./lib/map-style.ts";
 import { boardUrl, rememberBoard, useBoardId } from "./lib/router.ts";
 
 export function App() {
@@ -16,7 +17,7 @@ export function App() {
 
   // The engine owns the map and never re-renders through React.
   useEffect(() => {
-    const instance = createEngine(host.current!, { styles: mapStyles, boardUrl });
+    const instance = createEngine(host.current!, { style: mapStyle, boardUrl });
     setEngine(instance);
     return () => {
       instance.destroy();
@@ -55,11 +56,8 @@ function Overlay() {
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-3">
         <BoardMenu />
-        <div className="flex gap-2">
-          <div className="md:hidden">
-            <HistoryControls />
-          </div>
-          <StylePicker />
+        <div className="md:hidden">
+          <HistoryControls />
         </div>
       </div>
 

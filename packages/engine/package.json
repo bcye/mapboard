@@ -15,6 +15,7 @@
     "fractional-indexing": "catalog:",
     "maplibre-gl": "catalog:",
     "nanostores": "catalog:",
+    "pmtiles": "catalog:",
     "y-indexeddb": "catalog:",
     "yjs": "catalog:"
   },
