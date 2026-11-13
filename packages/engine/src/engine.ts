@@ -1,5 +1,5 @@
 import "./map-assets.ts";
-import { LngLatBounds, Map as MapLibreMap } from "maplibre-gl";
+import { LngLatBounds, Map as MapLibreMap, type StyleSpecification } from "maplibre-gl";
 import { openBoard as openBoardDoc, type Board } from "./board.ts";
 import { $boards, createBoardMeta, ensureBoardMeta, findBoard, touchBoard } from "./boards.ts";
 import { createBoardFile, type BoardFile } from "./file.ts";
@@ -25,8 +25,8 @@ import {
 } from "./types.ts";
 
 export interface EngineOptions {
-  /** MapLibre style URL for the basemap. */
-  style: string;
+  /** MapLibre style (or its URL) for the basemap. */
+  style: StyleSpecification | string;
   /** URL that opens a board, used by a linked marker's open button. */
   boardUrl?: (id: string) => string;
 }

@@ -17,7 +17,7 @@
 - Engine/non-framework code lives separately, so frameworks can be trialed
 - React for the first prototype. Probably rebuild later in other frameworks, just to try them.
 - CSR, probably settled
-- Tiles: PMTiles planet build (pmtiles-planet.b-cdn.net), OSM Liberty style.
+- Tiles: PMTiles planet build (pmtiles-planet.b-cdn.net), Protomaps style.
 
 ## To decide
 

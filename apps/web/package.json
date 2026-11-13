@@ -13,6 +13,7 @@
     "@fontsource-variable/caveat": "catalog:",
     "@nanostores/react": "catalog:",
     "@phosphor-icons/react": "catalog:",
+    "@protomaps/basemaps": "catalog:",
     "engine": "workspace:*",
     "nanostores": "catalog:",
     "react": "^19.3.1",

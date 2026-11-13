@@ -6,7 +6,8 @@ import { HistoryControls, ZoomControls } from "./components/MapControls.tsx";
 import { BoardLinkHint, EmptyHint, Toasts } from "./components/Notices.tsx";
 import { Toolbar } from "./components/Toolbar.tsx";
 import { ToolOptions } from "./components/ToolOptions.tsx";
-import { EngineContext, mapStyle } from "./lib/engine.ts";
+import { EngineContext } from "./lib/engine.ts";
+import { mapStyle } from "./lib/map-style.ts";
 import { boardUrl, rememberBoard, useBoardId } from "./lib/router.ts";
 
 export function App() {
