@@ -36,7 +36,7 @@ The basemap is the [Protomaps](https://docs.protomaps.com/basemaps/maplibre) lig
 
 ## Licenses
 
-`apps/web/licenses.ts` builds `third-party-licenses.txt` from `pnpm licenses` (production dependencies of the app) and emits it with the build. The board menu links to it.
+`apps/web/vite-plugins/licenses.ts` builds `third-party-licenses.txt` from `pnpm licenses` (production dependencies of the app) and emits it with the build. The board menu links to it.
 
 ## Data
 
