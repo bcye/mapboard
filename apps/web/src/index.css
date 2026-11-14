@@ -28,12 +28,12 @@
 }
 
 /* MapLibre's attribution, below the board menu: the overlay's margin (0.75rem), the menu (3rem) and the toolbar gap (0.5rem).
-   !important because MapLibre's CSS loads after ours. */
+   Overrides MapLibre's CSS, which main.tsx loads before ours. */
 .maplibregl-ctrl-top-left {
-  top: 4.25rem !important;
-  left: 0.75rem !important;
+  top: 4.25rem;
+  left: 0.75rem;
 }
 
 .maplibregl-ctrl-top-left > .maplibregl-ctrl-attrib {
-  margin: 0 !important;
+  margin: 0;
 }

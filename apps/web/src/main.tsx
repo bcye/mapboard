@@ -1,7 +1,8 @@
 import "@fontsource-variable/caveat";
-import "./index.css";
 import { init } from "@plausible-analytics/tracker";
 import { $boards, createBoardMeta } from "engine";
+// After the engine, so our CSS comes after MapLibre's and overrides it.
+import "./index.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.tsx";
