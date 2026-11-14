@@ -3,6 +3,7 @@ import {
   Check,
   Compass,
   DownloadSimple,
+  GithubLogo,
   MapTrifold,
   Plus,
   Trash,
@@ -154,6 +155,17 @@ export function BoardMenu() {
             >
               Delete this board
             </MenuAction>
+            <a
+              href="https://github.com/bcye/mapboard"
+              target="_blank"
+              rel="noreferrer"
+              className={menuActionClass}
+            >
+              <span className="grid size-5 place-items-center">
+                <GithubLogo size={20} weight="duotone" />
+              </span>
+              View source on GitHub
+            </a>
           </div>
           <p className="px-2 pt-2 pb-1 text-xs leading-snug text-stone-500">
             Boards are saved in this browser only. Export a backup to keep one safe.
@@ -183,6 +195,9 @@ export function BoardMenu() {
   );
 }
 
+const menuActionClass =
+  "flex w-full cursor-pointer items-center gap-2.5 rounded-xl px-2 py-2 text-left text-sm font-medium text-stone-700 transition hover:bg-orange-100/70";
+
 function MenuAction({
   icon,
   children,
@@ -195,14 +210,7 @@ function MenuAction({
   className?: string;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cx(
-        "flex w-full cursor-pointer items-center gap-2.5 rounded-xl px-2 py-2 text-left text-sm font-medium text-stone-700 transition hover:bg-orange-100/70",
-        className,
-      )}
-    >
+    <button type="button" onClick={onClick} className={cx(menuActionClass, className)}>
       <span className="grid size-5 place-items-center">{icon}</span>
       {children}
     </button>
