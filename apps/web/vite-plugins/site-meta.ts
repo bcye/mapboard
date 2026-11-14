@@ -12,12 +12,12 @@ export function siteMeta(): Plugin {
     { name: "apple-mobile-web-app-title", content: site.name },
     { property: "og:type", content: "website" },
     { property: "og:site_name", content: site.name },
-    { property: "og:title", content: site.name },
-    { property: "og:description", content: site.shareDescription },
+    { property: "og:title", content: site.title },
+    { property: "og:description", content: site.description },
     { property: "og:locale", content: site.locale },
     { name: "twitter:card", content: site.image ? "summary_large_image" : "summary" },
-    { name: "twitter:title", content: site.name },
-    { name: "twitter:description", content: site.shareDescription },
+    { name: "twitter:title", content: site.title },
+    { name: "twitter:description", content: site.description },
   ];
   if (origin) meta.push({ property: "og:url", content: `${origin}/` });
   if (site.image) {

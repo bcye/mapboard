@@ -5,13 +5,11 @@
 export const site = {
   /** App name: the page title, and the suffix after a board's name. */
   name: "Mapboard",
-  /** Search result title: the static `<title>`, before the app sets a board's name. */
-  title: "Mapboard – Plan trips on a map with routes, pins and notes",
-  /** Search result text. */
+  /** Search result and link preview title: the static `<title>`, before the app sets a board's name. */
+  title: "Mapboard: Plan trips on a map with routes, pins and notes",
+  /** Search result and link preview text. */
   description:
     "Plan trips on a world map. Draw routes, drop markers, stick post-it notes anywhere and link boards together. Free, no sign-up, right in your browser.",
-  /** Link preview text (`og:` / `twitter:`); the preview title is `name`. */
-  shareDescription: "Plan freely with markers, arrows and post-its you can place on a world map.",
   /**
    * Public origin, e.g. "https://example.com". Needed for the canonical link and `og:url`,
    * and to make `image` absolute. Leave empty to skip those tags.
