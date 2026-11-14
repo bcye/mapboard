@@ -27,16 +27,8 @@
   }
 }
 
-/* MapLibre's attribution, in the app's style. Scoped to the map so it beats MapLibre's CSS, which loads later. */
-.maplibregl-map .maplibregl-ctrl.maplibregl-ctrl-attrib {
-  @apply rounded-full bg-amber-50/90 text-[11px] text-stone-600 shadow-sm ring-1 ring-stone-900/5;
-}
-
-.maplibregl-map .maplibregl-ctrl-attrib.maplibregl-compact-show {
-  @apply rounded-xl;
-}
-
-/* Below the board menu: the overlay's margin (0.75rem), the menu (3rem) and the toolbar gap (0.5rem). */
+/* MapLibre's attribution, below the board menu: the overlay's margin (0.75rem), the menu (3rem) and the toolbar gap (0.5rem).
+   Scoped to the map so it beats MapLibre's CSS, which loads later. */
 .maplibregl-map .maplibregl-ctrl-top-left {
   top: 4.25rem;
   left: 0.75rem;
