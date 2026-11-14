@@ -1,7 +1,12 @@
 import { layers, namedFlavor } from "@protomaps/basemaps";
 import type { EngineOptions } from "engine";
 
-const TILES = "https://pmtiles-planet.b-cdn.net/planet-20261112.pmtiles";
+/**
+ * The CDN sends no ETag and caches ranges for ~300 days, so browsers can't tell
+ * when the archive changes. Bump `v` to make every browser fetch it fresh (the
+ * CDN ignores the query string).
+ */
+const TILES = "https://pmtiles-planet.b-cdn.net/planet-20261112.pmtiles?v=2";
 const ASSETS = "https://protomaps.github.io/basemaps-assets";
 const FLAVOR = "light";
 
