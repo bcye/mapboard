@@ -13,9 +13,10 @@ export const site = {
    */
   url: "https://mapboard.bruceroettgers.eu",
   /** Link preview image, a path in `public/` (e.g. "/og.png", 1200×630). Leave empty to skip. */
-  image: "",
+  image: "/og.png",
   /** Alt text for `image`. */
-  imageAlt: "",
+  imageAlt:
+    "A Mapboard board of a Scottish Highlands road trip: a hand-drawn route between markers, with post-it notes around it.",
   /** X/Twitter handle, e.g. "@example". Leave empty to skip. */
   twitter: "",
   locale: "en_US",
