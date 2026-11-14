@@ -158,6 +158,14 @@ export function BoardMenu() {
           <p className="px-2 pt-2 pb-1 text-xs leading-snug text-stone-500">
             Boards are saved in this browser only. Export a backup to keep one safe.
           </p>
+          <a
+            href={`${import.meta.env.BASE_URL}third-party-licenses.txt`}
+            target="_blank"
+            rel="noreferrer"
+            className="block px-2 pb-1 text-xs text-stone-400 underline-offset-2 hover:text-stone-600 hover:underline"
+          >
+            Open-source licenses
+          </a>
         </Card>
       )}
       <input
