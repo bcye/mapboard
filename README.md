@@ -2,7 +2,7 @@
 
 Excalidraw for maps: sketch routes, drop markers and stick post-its on a real map. Local-first prototype.
 
-Planning lives in [`docs/`](docs/), and the reasoning behind it in [issue 1](https://github.com/bcye/excalidraw-map/issues/1).
+Planning lives in [`docs/`](docs/).
 
 ## Layout
 
