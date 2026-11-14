@@ -34,6 +34,10 @@ To pass dev server flags, target the app directly, e.g. `vp -C apps/web dev --ho
 
 The basemap is the [Protomaps](https://docs.protomaps.com/basemaps/maplibre) light style ([`apps/web/src/lib/map-style.ts`](apps/web/src/lib/map-style.ts)), with vector tiles from the PMTiles planet build at `pmtiles-planet.b-cdn.net`.
 
+## Licenses
+
+`apps/web/vite-plugins/licenses.ts` builds `third-party-licenses.txt` from `pnpm licenses` (production dependencies of the app) and emits it with the build. The board menu links to it.
+
 ## Data
 
 Boards are stored in the browser (IndexedDB) and sync live between tabs. Export and import a board as JSON from the board menu. Importing always creates a new board.
