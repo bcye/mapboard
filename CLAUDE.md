@@ -36,7 +36,3 @@ release. Add a tool name to select part of the graph. For example, run
 - [ ] If setup, runtime, or package-manager behavior looks wrong, run `vp env doctor` and include its output when asking for help.
 
 <!--VITE PLUS END-->
-
-# Context
-
-[Issue 1](https://github.com/bcye/excalidraw-map/issues/1) records the initial planning session: why things were chosen, options evaluated, and working assumptions for the prototype. Its comments hold the full conversation. Read it when a design decision needs context.
