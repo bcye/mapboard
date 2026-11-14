@@ -27,19 +27,13 @@
   }
 }
 
-/* MapLibre's attribution, in the app's style. */
-.maplibregl-ctrl.maplibregl-ctrl-attrib {
-  @apply rounded-full bg-amber-50/90 text-[11px] text-stone-600 shadow-sm ring-1 ring-stone-900/5;
+/* MapLibre's attribution, below the board menu: the overlay's margin (0.75rem), the menu (3rem) and the toolbar gap (0.5rem).
+   !important because MapLibre's CSS loads after ours. */
+.maplibregl-ctrl-top-left {
+  top: 4.25rem !important;
+  left: 0.75rem !important;
 }
 
-.maplibregl-ctrl-attrib.maplibregl-compact-show {
-  @apply rounded-xl;
-}
-
-/* On phones the toolbars sit at the bottom, so move the attribution up top. */
-@media (width < 48rem) {
-  .maplibregl-ctrl-bottom-right {
-    top: 4.25rem;
-    bottom: auto;
-  }
+.maplibregl-ctrl-top-left > .maplibregl-ctrl-attrib {
+  margin: 0 !important;
 }

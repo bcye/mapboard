@@ -77,7 +77,7 @@ function Overlay() {
           <HistoryControls />
         </div>
       </div>
-      <div className="pointer-events-none absolute right-3 bottom-10 z-10 hidden md:block">
+      <div className="pointer-events-none absolute right-3 bottom-3 z-10 hidden md:block">
         <div className="pointer-events-auto">
           <ZoomControls />
         </div>

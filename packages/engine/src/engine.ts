@@ -1,5 +1,5 @@
 import "./map-assets.ts";
-import { LngLatBounds, Map as MapLibreMap, type StyleSpecification } from "maplibre-gl";
+import { AttributionControl, LngLatBounds, Map as MapLibreMap, type StyleSpecification } from "maplibre-gl";
 import { openBoard as openBoardDoc, type Board } from "./board.ts";
 import { $boards, createBoardMeta, ensureBoardMeta, findBoard, touchBoard } from "./boards.ts";
 import { createBoardFile, type BoardFile } from "./file.ts";
@@ -126,13 +126,14 @@ export function createEngine(container: HTMLElement, options: EngineOptions): En
     style: options.style,
     center: DEFAULT_CAMERA.center,
     zoom: DEFAULT_CAMERA.zoom,
-    attributionControl: { compact: true },
+    attributionControl: false,
     dragRotate: false,
     pitchWithRotate: false,
     touchPitch: false,
     maxPitch: 0,
     clickTolerance: 4,
   });
+  map.addControl(new AttributionControl({ compact: true }), "top-left");
   map.touchZoomRotate.disableRotation();
   map.keyboard.disableRotation();
 
