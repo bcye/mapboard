@@ -4,14 +4,14 @@
  */
 export const site = {
   /** App name: the page title, and the suffix after a board's name. */
-  name: "Map board",
+  name: "Mapboard",
   /** Search result and link preview text. */
-  description: "Sketch routes, drop markers and stick post-its on a real map.",
+  description: "Plan freely with markers, arrows and post-its you can place on a world map.",
   /**
    * Public origin, e.g. "https://example.com". Needed for the canonical link and `og:url`,
    * and to make `image` absolute. Leave empty to skip those tags.
    */
-  url: "",
+  url: "https://mapboard.bruceroettgers.eu",
   /** Link preview image, a path in `public/` (e.g. "/og.png", 1200×630). Leave empty to skip. */
   image: "",
   /** Alt text for `image`. */
