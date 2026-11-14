@@ -1,14 +1,15 @@
-# excalidraw-map
+# Mapboard
 
-Excalidraw for maps: sketch routes, drop markers and stick post-its on a real map. Local-first prototype.
+Like Excalidraw on a map: Plan freely with markers, post-its and sketching. Organise but linking to other boards from markers.
 
-Planning lives in [`docs/`](docs/).
+Try it out at [mapboard.bruceroettgers.eu](https://mapboard.bruceroettgers.eu)
 
 ## Layout
 
 ```
 packages/engine   Framework-free TypeScript: board model (Yjs), tools, MapLibre rendering, UI store
 apps/web          React + Tailwind UI around the engine
+docs              Product and architecture decisions and planning
 ```
 
 The engine has no framework dependency, so the UI can be rebuilt in other frameworks on top of it. Inside it, `board.ts` is the only module that imports Yjs.
@@ -34,10 +35,10 @@ To pass dev server flags, target the app directly, e.g. `vp -C apps/web dev --ho
 
 The basemap is the [Protomaps](https://docs.protomaps.com/basemaps/maplibre) light style ([`apps/web/src/lib/map-style.ts`](apps/web/src/lib/map-style.ts)), with vector tiles from the PMTiles planet build at `pmtiles-planet.b-cdn.net`.
 
-## Licenses
-
-`apps/web/vite-plugins/licenses.ts` builds `third-party-licenses.txt` from `pnpm licenses` (production dependencies of the app) and emits it with the build. The board menu links to it.
-
 ## Data
 
 Boards are stored in the browser (IndexedDB) and sync live between tabs. Export and import a board as JSON from the board menu. Importing always creates a new board.
+
+## License
+
+MPL-2.0, see [LICENSE](LICENSE)
