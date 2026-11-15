@@ -12,6 +12,7 @@
   - One-time hint about it the first time you place a marker.
 - Drawings snap to a post-it or marker if one is in the area. Snapped lines follow when it moves; only the last part of the line moves.
 - Export and import as JSON for backup from day one. Import creates a new board.
+- Welcome card on an empty board says boards are saved in this browser only and to back up now and then.
 - Labels on markers and lines, not on post-its. Plain (darker shade of the element's color) or in a box (black on white). Below markers, near the midpoint for lines. Wraps instead of growing wide. Edited in place on the map.
 - Elements get bigger and smaller with zoom, slower than the map and within limits. Applies to all elements. Size depends only on the current zoom, not the zoom an element was drawn at.
 - Post-its: font size small, medium or large; grow as you type. Resizable, but not smaller than their text (trying it).
