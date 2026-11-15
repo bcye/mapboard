@@ -77,18 +77,23 @@ export function BoardMenu() {
   };
 
   return (
-    <div ref={ref} className="pointer-events-auto relative">
+    <div ref={ref} className="pointer-events-auto relative min-w-0">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="flex h-12 cursor-pointer items-center gap-2 rounded-2xl bg-amber-50/95 pr-3 pl-1.5 shadow-lg ring-1 shadow-orange-950/10 ring-orange-950/10 backdrop-blur-md transition hover:bg-amber-50 active:scale-[0.98]"
+        className="flex h-12 max-w-full cursor-pointer items-center gap-2 rounded-2xl bg-amber-50/95 pr-3 pl-1.5 shadow-lg ring-1 shadow-orange-950/10 ring-orange-950/10 backdrop-blur-md transition hover:bg-amber-50 active:scale-[0.98]"
       >
         <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-linear-to-br from-orange-400 to-rose-500 text-white shadow-sm shadow-rose-600/30">
           <Compass size={22} weight="duotone" />
         </span>
-        <span className="max-w-[8.5rem] truncate pr-1 font-hand text-2xl leading-none font-semibold text-stone-800 lg:max-w-[14rem]">
-          {current?.name ?? "…"}
+        <span className="flex min-w-0 flex-col items-start text-left">
+          <span className="max-w-full truncate pr-1 font-hand text-2xl leading-6 font-semibold text-stone-800 sm:max-w-[14rem]">
+            {current?.name ?? "…"}
+          </span>
+          <span className="max-w-full truncate text-[11px] leading-3.5 text-stone-500">
+            Saved in this browser · Back up regularly
+          </span>
         </span>
         <CaretDown size={14} weight="bold" className="shrink-0 text-stone-400" />
       </button>

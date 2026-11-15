@@ -6,9 +6,10 @@ import { HistoryControls, ZoomControls } from "./components/MapControls.tsx";
 import { BoardLinkHint, EmptyHint, Toasts } from "./components/Notices.tsx";
 import { Toolbar } from "./components/Toolbar.tsx";
 import { ToolOptions } from "./components/ToolOptions.tsx";
-import { EngineContext } from "./lib/engine.ts";
+import { EngineContext, useEngine } from "./lib/engine.ts";
 import { mapStyle } from "./lib/map-style.ts";
 import { boardUrl, rememberBoard, useBoardId } from "./lib/router.ts";
+import { usePersistentStorage } from "./lib/storage.ts";
 import { pageTitle } from "./site.ts";
 
 export function App() {
@@ -50,6 +51,7 @@ export function App() {
 function Overlay() {
   useDocumentTitle();
   useKeyboardInset();
+  usePersistentStorage(useEngine());
   return (
     <>
       <EmptyHint />
