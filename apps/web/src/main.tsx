@@ -11,7 +11,7 @@ import { goToBoard, lastBoardId } from "./lib/router.ts";
 // Privacy-friendly analytics by Plausible
 init({
   domain: "mapboard.bruceroettgers.eu",
-  endpoint: "https://p-proxy-tp8ez.bunny.run/api/event",
+  endpoint: "https://p-proxy.bruceroettgers.eu/api/event",
   outboundLinks: true,
 });
 
