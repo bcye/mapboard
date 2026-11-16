@@ -2,6 +2,7 @@ export { createEngine, TOOLS, type Engine, type EngineOptions, type SelectedPatc
 export type { History } from "./board.ts";
 export {
   $boards,
+  isDefaultBoardName,
   createBoardMeta,
   deleteBoard,
   ensureBoardMeta,

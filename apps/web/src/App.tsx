@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import { $boards, createEngine, type Engine } from "engine";
+import { $boards, createEngine, isDefaultBoardName, type Engine } from "engine";
 import { useEffect, useRef, useState } from "react";
 import { BoardMenu } from "./components/BoardMenu.tsx";
 import { HistoryControls, ZoomControls } from "./components/MapControls.tsx";
@@ -93,7 +93,8 @@ function useDocumentTitle() {
   const boardId = useBoardId();
   const name = boards.find((b) => b.id === boardId)?.name;
   useEffect(() => {
-    document.title = pageTitle(name);
+    // Auto-named boards keep the static title: crawlers that run JS always land on a fresh one.
+    document.title = pageTitle(name && !isDefaultBoardName(name) ? name : undefined);
   }, [name]);
 }
 
