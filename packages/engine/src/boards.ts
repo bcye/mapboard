@@ -50,6 +50,13 @@ export function findBoard(id: string): BoardMeta | undefined {
   return $boards.get().find((b) => b.id === id);
 }
 
+const DEFAULT_NAME = /^Untitled board( \d+)?$/;
+
+/** Whether `name` is one given automatically to a new board, not chosen by the user. */
+export function isDefaultBoardName(name: string): boolean {
+  return DEFAULT_NAME.test(name);
+}
+
 function nextName(): string {
   const names = new Set($boards.get().map((b) => b.name));
   if (!names.has("Untitled board")) return "Untitled board";

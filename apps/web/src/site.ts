@@ -26,6 +26,7 @@ export const site = {
   themeColor: "#fffbeb",
 };
 
+/** The board's name plus the app name; without one, the static `title`. */
 export function pageTitle(boardName?: string) {
-  return boardName ? `${boardName} · ${site.name}` : site.name;
+  return boardName ? `${boardName} · ${site.name}` : site.title;
 }
