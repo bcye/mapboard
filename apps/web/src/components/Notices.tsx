@@ -22,8 +22,10 @@ export function EmptyHint() {
             Explore &amp; Plan Freely
           </span>
           <br />
-          Plan your next adventure freely with markers, post-its and drawings you can place on this map. Tip:
-          Create multiple boards and link to them from pins for more detailed planning.
+          Plan your next adventure with markers, post-its and drawings you can place on this map.
+          <span className="mt-1 block text-xs text-stone-500">
+            Boards are saved in this browser only. Export important boards regularly.
+          </span>
         </p>
       </div>
     </div>

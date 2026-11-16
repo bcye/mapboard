@@ -65,11 +65,38 @@ export interface OpenBoardOptions {
 
 const dbName = (id: string) => `map-board:${id}`;
 
+let persistRequested = false;
+
+/**
+ * Asks the browser to exempt stored boards from eviction, once per page load.
+ * Firefox may prompt, so this runs on the first edit instead of on load.
+ */
+function requestPersistentStorage() {
+  if (persistRequested) return;
+  persistRequested = true;
+  const storage = typeof navigator === "undefined" ? undefined : navigator.storage;
+  if (!storage?.persist) return;
+  void storage
+    .persisted()
+    .then((persisted) => persisted || storage.persist())
+    .catch(() => {
+      // Not granted; boards are still saved, just evictable.
+    });
+}
+
 export function openBoard(id: string, options: OpenBoardOptions = {}): Board {
   const doc = new Y.Doc();
   const elements = doc.getMap<Y.Map<unknown>>("elements");
   const persistence = options.persist === false ? null : new IndexeddbPersistence(dbName(id), doc);
   const ready = persistence ? persistence.whenSynced.then(() => undefined) : Promise.resolve();
+  if (persistence) {
+    const onEdit = (_update: Uint8Array, origin: unknown) => {
+      if (origin !== LOCAL && origin !== IMPORT) return;
+      doc.off("update", onEdit);
+      requestPersistentStorage();
+    };
+    doc.on("update", onEdit);
+  }
 
   const changeListeners = new Set<(ids: Set<string>) => void>();
   elements.observeDeep((events) => {
