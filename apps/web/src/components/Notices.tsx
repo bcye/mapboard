@@ -24,7 +24,7 @@ export function EmptyHint() {
           <br />
           Plan your next adventure with markers, post-its and drawings you can place on this map.
           <span className="mt-1 block text-xs text-stone-500">
-            Boards are saved in this browser only. Export a backup from the board menu now and then.
+            Boards are saved in this browser only. Export important boards regularly.
           </span>
         </p>
       </div>
