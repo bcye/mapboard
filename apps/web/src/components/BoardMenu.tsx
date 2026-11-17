@@ -1,5 +1,6 @@
 import {
   CaretDown,
+  ChatCircleText,
   Check,
   Compass,
   DownloadSimple,
@@ -155,6 +156,12 @@ export function BoardMenu() {
             >
               Delete this board
             </MenuAction>
+            <a href="mailto:mapboard@bruceroettgers.eu?subject=Feedback" className={menuActionClass}>
+              <span className="grid size-5 place-items-center">
+                <ChatCircleText size={20} weight="duotone" />
+              </span>
+              Feedback
+            </a>
             <a
               href="https://github.com/bcye/mapboard"
               target="_blank"
