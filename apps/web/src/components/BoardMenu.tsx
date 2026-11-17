@@ -5,6 +5,7 @@ import {
   DownloadSimple,
   GithubLogo,
   MapTrifold,
+  PaperPlaneTilt,
   Plus,
   Trash,
   UploadSimple,
@@ -155,6 +156,17 @@ export function BoardMenu() {
             >
               Delete this board
             </MenuAction>
+          </div>
+          <div className="mt-2 grid gap-0.5 border-t border-orange-950/10 pt-2">
+            <a
+              href="mailto:mapboard@bruceroettgers.eu?subject=Feedback%20about%20Mapboard"
+              className={menuActionClass}
+            >
+              <span className="grid size-5 place-items-center">
+                <PaperPlaneTilt size={20} weight="duotone" />
+              </span>
+              Feedback
+            </a>
             <a
               href="https://github.com/bcye/mapboard"
               target="_blank"
